@@ -12,10 +12,10 @@ HTML_TEMPLATE = """<!doctype html>
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
   <title>TARDIS Approach-4 Notebook Gallery</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }
-    .muted { color: #666; font-size: 0.9rem; }
+    body {{ font-family: Arial, sans-serif; margin: 2rem; }}
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }}
+    .card {{ border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }}
+    .muted {{ color: #666; font-size: 0.9rem; }}
   </style>
 </head>
 <body>
