@@ -25,6 +25,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-prefix", default=None)
     parser.add_argument("--output-dir", default=".")
     parser.add_argument("--format", choices=["png", "pdf"], default="png")
+    parser.add_argument("--sanity-only", action="store_true", help="Run simulation only, skip plot generation.")
     return parser
 
 
@@ -73,6 +74,7 @@ def generate_plots_from_config(
     output_prefix: str | None = None,
     output_dir: str | Path = ".",
     fmt: str = "png",
+    sanity_only: bool = False,
 ) -> list[str]:
     config_path = Path(config_path)
     output_dir = Path(output_dir)
@@ -84,6 +86,8 @@ def generate_plots_from_config(
         atom_data=resolve_atom_data(atom_data),
         virtual_packet_logging=True,
     )
+    if sanity_only:
+        return []
     return save_plots(simulation, output_prefix, output_dir, fmt)
 
 
@@ -95,6 +99,7 @@ def main() -> None:
         output_prefix=args.output_prefix,
         output_dir=args.output_dir,
         fmt=args.format,
+        sanity_only=args.sanity_only,
     )
 
 

@@ -51,6 +51,7 @@ def run_sanity(config_path: Path, atom_data: str, env_name: str) -> bool:
         str(config_path),
         "--atom-data",
         atom_data,
+        "--sanity-only",
         "--output-dir",
         "generated/sanity-plots",
         "--output-prefix",
