@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import tempfile
 import urllib.request
@@ -72,21 +73,78 @@ def conda_exec_env(setup_data: dict) -> dict:
     return run_env
 
 
+def list_remote_tags(repo_url: str) -> list[str]:
+    cmd = ["git", "ls-remote", "--tags", repo_url]
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    if result.returncode != 0:
+        return []
+
+    tags: list[str] = []
+    for line in result.stdout.splitlines():
+        parts = line.strip().split()
+        if len(parts) != 2:
+            continue
+        ref = parts[1]
+        if not ref.startswith("refs/tags/"):
+            continue
+        tag = ref.replace("refs/tags/", "", 1)
+        if tag.endswith("^{}"):
+            tag = tag[:-3]
+        tags.append(tag)
+    return sorted(set(tags))
+
+
+def resolve_latest_release_tag(repo_url: str) -> str | None:
+    tags = list_remote_tags(repo_url)
+    best_tag: str | None = None
+    best_key: tuple[int, int, int] | None = None
+
+    pattern = re.compile(r"^release-(\d{4})\.(\d{1,2})\.(\d{1,2})$")
+    for tag in tags:
+        match = pattern.match(tag)
+        if not match:
+            continue
+        key = (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+        if best_key is None or key > best_key:
+            best_key = key
+            best_tag = tag
+
+    return best_tag
+
+
 def install_tardis(conda_bin: str, env_name: str, setup_data: dict, exec_env: dict) -> tuple[str, str]:
     requested_ref = setup_data.get("tardis", {}).get("requested_ref", "release-latest")
     if not isinstance(requested_ref, str) or not requested_ref.strip():
         requested_ref = "release-latest"
 
+    repo_url = setup_data.get("tardis", {}).get("repo_url", "https://github.com/tardis-sn/tardis.git")
+    if not isinstance(repo_url, str) or not repo_url.strip():
+        repo_url = "https://github.com/tardis-sn/tardis.git"
+
     normalized = requested_ref.strip()
-    if normalized in {"release-latest", "latest", "main", "master"}:
-        candidate_refs = ["main"]
+    latest_release_tag = resolve_latest_release_tag(repo_url)
+
+    if normalized in {"release-latest", "latest"}:
+        candidate_refs = [
+            latest_release_tag,
+            "release-latest",
+            "master",
+            "main",
+        ]
     else:
-        candidate_refs = [normalized, "main"]
+        candidate_refs = [normalized, latest_release_tag, "release-latest", "master", "main"]
+
+    deduped_refs: list[str] = []
+    for ref in candidate_refs:
+        if not ref:
+            continue
+        if ref not in deduped_refs:
+            deduped_refs.append(ref)
 
     subprocess.run([conda_bin, "install", "-y", "-n", env_name, "pip"], check=False, env=exec_env)
 
-    for ref in candidate_refs:
-        pip_spec = f"git+https://github.com/tardis-sn/tardis.git@{ref}"
+    for ref in deduped_refs:
+        pip_spec = f"git+{repo_url}@{ref}"
         pip_cmd = [
             conda_bin,
             "run",
@@ -103,18 +161,9 @@ def install_tardis(conda_bin: str, env_name: str, setup_data: dict, exec_env: di
         if result.returncode == 0:
             return ("pip", pip_spec)
 
-    tardis_spec = setup_data.get("tardis", {}).get("conda_spec", "tardis-sn")
-    install_cmd = [conda_bin, "install", "-y", "-n", env_name, tardis_spec]
-    result = subprocess.run(install_cmd, check=False, env=exec_env)
-    if result.returncode == 0:
-        return ("conda", tardis_spec)
-
-    fallback_cmd = [conda_bin, "install", "-y", "-n", env_name, "tardis-sn"]
-    fallback_result = subprocess.run(fallback_cmd, check=False, env=exec_env)
-    if fallback_result.returncode == 0:
-        return ("conda", "tardis-sn")
-
-    raise SystemExit(fallback_result.returncode)
+    raise RuntimeError(
+        f"Failed to install TARDIS from {repo_url} using refs: {', '.join(deduped_refs)}"
+    )
 
 
 def main() -> None:

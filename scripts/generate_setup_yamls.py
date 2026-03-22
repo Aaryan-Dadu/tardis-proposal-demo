@@ -99,6 +99,8 @@ def create_setup_yaml(config_path: Path, tardis_spec: str, atom_data: str) -> Pa
             ],
         },
         "tardis": {
+            "install_source": "pip-git",
+            "repo_url": "https://github.com/tardis-sn/tardis.git",
             "requested_ref": infer_tardis_request(config_path),
             "conda_spec": tardis_spec,
         },

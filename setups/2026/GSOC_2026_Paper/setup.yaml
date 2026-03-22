@@ -12,6 +12,8 @@ environment:
     - nbconvert
     - papermill
 tardis:
+  install_source: pip-git
+  repo_url: https://github.com/tardis-sn/tardis.git
   requested_ref: release-latest
   conda_spec: tardis-sn
 config:
