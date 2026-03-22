@@ -13,7 +13,7 @@ Approach-4 uses three distinct types of conda environments, each with a specific
 **Used for**: Config detection, setup.yaml generation, sanity check validation
 
 **Installed packages**:
-- `python=3.11` – Modern Python for CI scripts
+- `python=3.13` – Match TARDIS requires-python baseline
 - `git` – Version control
 - `gitpython` – Programmatic git operations (detect changed configs)
 - `pyyaml` – Parse YAML config files and setup.yaml
@@ -28,7 +28,7 @@ Approach-4 uses three distinct types of conda environments, each with a specific
 **Used for**: Orchestrate per-config environment creation and notebook execution pipeline
 
 **Installed packages**:
-- `python=3.11` – Match CI for consistency
+- `python=3.13` – Match TARDIS requires-python baseline
 - `gitpython` – Clone/pull repos on server
 - `papermill>=2.3.0` – Execute parameterized notebooks
 - `nbconvert>=6.0` – Convert notebooks to HTML

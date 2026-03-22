@@ -25,7 +25,7 @@ def accept_conda_tos() -> None:
 
 
 def ensure_conda_env(setup_yaml: Path, env_name: str) -> None:
-    subprocess.run(
+    result = subprocess.run(
         [
             "python",
             "server/setup_env_from_setup_yaml.py",
@@ -36,6 +36,8 @@ def ensure_conda_env(setup_yaml: Path, env_name: str) -> None:
         ],
         check=False,
     )
+    if result.returncode != 0:
+        raise RuntimeError(f"Environment setup failed for {setup_yaml}")
 
 
 def run_sanity(config_path: Path, atom_data: str, env_name: str) -> bool:
@@ -70,8 +72,12 @@ def main() -> None:
         setup_yaml = Path(row["setup_yaml"])
         sanity_config = Path(row["sanity_config"])
         env_name = env_name_for_config(sanity_config)
-        ensure_conda_env(setup_yaml, env_name)
-        ok = run_sanity(sanity_config, row.get("atom_data", "kurucz_cd23_chianti_H_He_latest"), env_name)
+        try:
+            ensure_conda_env(setup_yaml, env_name)
+            ok = run_sanity(sanity_config, row.get("atom_data", "kurucz_cd23_chianti_H_He_latest"), env_name)
+        except Exception as exc:  # noqa: BLE001
+            ok = False
+            print(f"Sanity setup failed for {setup_yaml}: {exc}")
         results.append({**row, "sanity_passed": ok})
 
     output = Path(args.output)

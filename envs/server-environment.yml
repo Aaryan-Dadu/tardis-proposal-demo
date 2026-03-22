@@ -12,7 +12,7 @@ channels:
   - conda-forge
 dependencies:
   # Python and core tools
-  - python=3.11         # Match CI environment for consistency
+  - python=3.13         # Match TARDIS requires-python (>=3.13)
   - pip
   
   # YAML and config handling

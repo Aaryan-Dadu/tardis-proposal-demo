@@ -13,7 +13,7 @@ if [[ ! -x "$CONDA_BIN" ]]; then
 fi
 
 "$CONDA_BIN" env remove -n "$CONTROL_ENV_NAME" -y >/dev/null 2>&1 || true
-"$CONDA_BIN" create -y -n "$CONTROL_ENV_NAME" python=3.11 pyyaml
+"$CONDA_BIN" create -y -n "$CONTROL_ENV_NAME" python=3.13 pyyaml
 
 cd "$REPO_ROOT"
 

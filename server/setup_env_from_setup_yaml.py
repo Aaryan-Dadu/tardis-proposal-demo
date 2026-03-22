@@ -72,6 +72,51 @@ def conda_exec_env(setup_data: dict) -> dict:
     return run_env
 
 
+def install_tardis(conda_bin: str, env_name: str, setup_data: dict, exec_env: dict) -> tuple[str, str]:
+    requested_ref = setup_data.get("tardis", {}).get("requested_ref", "release-latest")
+    if not isinstance(requested_ref, str) or not requested_ref.strip():
+        requested_ref = "release-latest"
+
+    normalized = requested_ref.strip()
+    if normalized in {"release-latest", "latest", "main", "master"}:
+        candidate_refs = ["main"]
+    else:
+        candidate_refs = [normalized, "main"]
+
+    subprocess.run([conda_bin, "install", "-y", "-n", env_name, "pip"], check=False, env=exec_env)
+
+    for ref in candidate_refs:
+        pip_spec = f"git+https://github.com/tardis-sn/tardis.git@{ref}"
+        pip_cmd = [
+            conda_bin,
+            "run",
+            "-n",
+            env_name,
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            pip_spec,
+        ]
+        result = subprocess.run(pip_cmd, check=False)
+        if result.returncode == 0:
+            return ("pip", pip_spec)
+
+    tardis_spec = setup_data.get("tardis", {}).get("conda_spec", "tardis-sn")
+    install_cmd = [conda_bin, "install", "-y", "-n", env_name, tardis_spec]
+    result = subprocess.run(install_cmd, check=False, env=exec_env)
+    if result.returncode == 0:
+        return ("conda", tardis_spec)
+
+    fallback_cmd = [conda_bin, "install", "-y", "-n", env_name, "tardis-sn"]
+    fallback_result = subprocess.run(fallback_cmd, check=False, env=exec_env)
+    if fallback_result.returncode == 0:
+        return ("conda", "tardis-sn")
+
+    raise SystemExit(fallback_result.returncode)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create conda env from setup.yaml for one config.")
     parser.add_argument("--setup-yaml", required=True)
@@ -104,14 +149,7 @@ def main() -> None:
     if result.returncode != 0:
         raise SystemExit(result.returncode)
 
-    tardis_spec = setup_data.get("tardis", {}).get("conda_spec", "tardis-sn")
-    install_cmd = [conda_bin, "install", "-y", "-n", env_name, tardis_spec]
-    result = subprocess.run(install_cmd, check=False, env=exec_env)
-    if result.returncode != 0:
-        fallback_cmd = [conda_bin, "install", "-y", "-n", env_name, "tardis-sn"]
-        fallback_result = subprocess.run(fallback_cmd, check=False, env=exec_env)
-        if fallback_result.returncode != 0:
-            raise SystemExit(fallback_result.returncode)
+    install_method, install_spec = install_tardis(conda_bin, env_name, setup_data, exec_env)
 
     extras = setup_data.get("environment", {}).get("extra_packages", [])
     if isinstance(extras, list) and extras:
@@ -127,14 +165,17 @@ def main() -> None:
         "-c",
         "import tardis; print(tardis.__version__)",
     ]
-    subprocess.run(verify_cmd, check=False)
+    verify_result = subprocess.run(verify_cmd, check=False)
+    if verify_result.returncode != 0:
+        raise SystemExit(verify_result.returncode)
 
     payload = {
         "setup_yaml": str(setup_yaml),
         "env_name": env_name,
         "conda_bin": conda_bin,
         "lockfile_url": lockfile_url,
-        "tardis_conda_spec": tardis_spec,
+        "tardis_install_method": install_method,
+        "tardis_install_spec": install_spec,
     }
     if args.output:
         output = Path(args.output)

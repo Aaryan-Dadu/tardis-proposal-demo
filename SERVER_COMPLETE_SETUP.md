@@ -88,7 +88,7 @@ When CI dispatches to your server, it **sends exactly**:
 
 **Control Environment Spec** (hardcoded in script):
 ```bash
-"$CONDA_BIN" create -y -n "$CONTROL_ENV_NAME" python=3.11 pyyaml
+"$CONDA_BIN" create -y -n "$CONTROL_ENV_NAME" python=3.13 pyyaml
 ```
 
 Why minimal? Because only this script needs to run orchestration code—the actual TARDIS simulations run in separate per-config environments created from lockfiles.
@@ -252,7 +252,7 @@ sim = run_tardis(config, atom_data=atom_data)
 ```bash
 1. Validate conda binary exists at $CONDA_BIN
 2. Create control environment:
-   conda create -y -n a4-control python=3.11 pyyaml
+  conda create -y -n a4-control python=3.13 pyyaml
 3. Call orchestration:
    conda run -n a4-control python server/process_server_queue.py \
      --queue generated/server-queue.json \
@@ -375,7 +375,7 @@ Push a commit to main and watch GitHub Actions:
 │ [~1 min] Set up conda environment                                           │
 │          └─ conda-incubator/setup-miniconda@v3                              │
 │          └─ Activate: tardis-gsoc-approach-4-ci                             │
-│          └─ Install: python=3.11, pyyaml, git, requests                     │
+│          └─ Install: python=3.13, pyyaml, git, requests                     │
 │                                                                             │
 │ [~1 min] Resolve diff refs                                                 │
 │          └─ if push: use before → HEAD                                      │

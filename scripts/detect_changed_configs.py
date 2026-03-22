@@ -15,8 +15,19 @@ def run_git_diff(base_ref: str, head_ref: str) -> list[str]:
 
 
 def is_config(path: str) -> bool:
-    suffix = Path(path).suffix.lower()
-    return suffix in {".yml", ".yaml", ".csvy"}
+    candidate = Path(path)
+    suffix = candidate.suffix.lower()
+    if suffix not in {".yml", ".yaml", ".csvy"}:
+        return False
+
+    parts = candidate.parts
+    if not parts or parts[0] != "setups":
+        return False
+
+    if candidate.name == "setup.yaml":
+        return False
+
+    return True
 
 
 def main() -> None:
