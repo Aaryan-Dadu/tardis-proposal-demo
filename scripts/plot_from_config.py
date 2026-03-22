@@ -8,6 +8,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from tardis import run_tardis
 from tardis.io.atom_data import download_atom_data
+from tardis.io.atom_data.util import resolve_atom_data_fname
 from tardis.io.configuration.config_reader import Configuration
 from tardis.visualization import LIVPlotter, SDECPlotter
 
@@ -28,10 +29,25 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def resolve_atom_data(atom_data: str | None) -> str:
-    if atom_data:
-        return atom_data
-    download_atom_data(DEFAULT_ATOM_DATA)
-    return DEFAULT_ATOM_DATA
+    requested = atom_data or DEFAULT_ATOM_DATA
+    base_name = requested[:-3] if requested.endswith(".h5") else requested
+
+    candidates = [requested, f"{base_name}.h5", base_name]
+    for candidate in candidates:
+        try:
+            return str(resolve_atom_data_fname(candidate))
+        except OSError:
+            continue
+
+    download_atom_data(base_name)
+
+    for candidate in candidates:
+        try:
+            return str(resolve_atom_data_fname(candidate))
+        except OSError:
+            continue
+
+    raise OSError(f"Atom data '{requested}' could not be resolved or downloaded")
 
 
 def save_plots(simulation, output_prefix: str, output_dir: Path, fmt: str = "png") -> list[str]:
