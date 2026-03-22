@@ -1,11 +1,32 @@
+# TARDIS GSoC Approach-4 Server Control Environment
+# This is the management/orchestration environment for the Azure server.
+# Per-config TARDIS simulation environments are created separately from tardisbase lockfiles
+# using setup_env_from_setup_yaml.py. This environment runs the orchestration scripts:
+# - Create and activate per-config environments from lockfiles
+# - Execute parameterized notebooks via Papermill
+# - Generate output gallery
+# For installation.rst alignment, the per-config environments follow the lockfile-first approach.
+
 name: tardis-gsoc-approach-4-server
 channels:
   - conda-forge
 dependencies:
-  - python=3.8
-  - pyyaml
-  - matplotlib
-  - jupyterlab
-  - nbconvert
-  - papermill
-  - tardis-sn
+  # Python and core tools
+  - python=3.11         # Match CI environment for consistency
+  - pip
+  
+  # YAML and config handling
+  - pyyaml>=6.0         # Parse setup.yaml files with proper version spec
+  - gitpython>=3.1.0    # Clone/pull repositories on the server
+  
+  # Notebook execution pipeline
+  - papermill>=2.3.0    # Execute parameterized notebooks
+  - nbconvert>=6.0      # Convert notebooks to HTML/other formats
+  - jupyterlab>=3.0     # Jupyter infrastructure (used by papermill)
+  
+  # Scientific visualization (required by plot_from_config.py)
+  - matplotlib>=3.3     # Plotting and visualization
+  - numpy               # Numerical operations for plot utilities
+  
+  # Data handling
+  - requests>=2.25      # HTTP requests for downloads

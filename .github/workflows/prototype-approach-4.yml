@@ -22,32 +22,63 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up micromamba
+      - name: Set up conda environment
         uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: tardis-gsoc-approach-4-ci
           environment-file: envs/ci-environment.yml
           auto-activate-base: false
 
+      - name: Resolve diff refs
+        id: diffrefs
+        run: |
+          # if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          #   echo "base_ref=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          #   echo "head_ref=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "base_ref=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+            echo "head_ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "base_ref=origin/main" >> "$GITHUB_OUTPUT"
+            echo "head_ref=HEAD" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Detect changed configs
         run: |
           python scripts/detect_changed_configs.py \
-            --base-ref origin/main \
-            --head-ref HEAD \
+            --base-ref "${{ steps.diffrefs.outputs.base_ref }}" \
+            --head-ref "${{ steps.diffrefs.outputs.head_ref }}" \
             --output generated/changed-configs.json
 
       - name: Generate per-config setup.yaml
         run: python scripts/generate_setup_yamls.py
 
-      - name: Create lightweight sanity configs
+      - name: Create reduced configs for CI sanity run
         run: python scripts/create_sanity_configs.py
 
-      - name: Run setup.yaml sanity tests
+      - name: Install from setup.yaml and run reduced sanity configs
         run: python scripts/run_setup_yaml_sanity.py
 
       - name: Create server queue payload
         if: success()
         run: python scripts/create_server_queue.py
+
+      - name: Check if server queue has work
+        if: success()
+        id: queuecheck
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          queue_path = Path("generated/server-queue.json")
+          rows = json.loads(queue_path.read_text(encoding="utf-8")) if queue_path.exists() else []
+          has_work = "true" if len(rows) > 0 else "false"
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"has_work={has_work}\n")
+          print(f"Queue entries: {len(rows)}")
+          PY
 
       - name: Upload CI artifacts
         if: always()
@@ -61,14 +92,37 @@ jobs:
             generated/sanity-results.json
             generated/server-queue.json
 
-      - name: Placeholder server trigger
-        if: success()
+      - name: Configure SSH for Azure dispatch
+        if: success() && steps.queuecheck.outputs.has_work == 'true' && secrets.AZURE_SERVER_HOST != '' && secrets.AZURE_SERVER_USER != '' && secrets.AZURE_SSH_PRIVATE_KEY != ''
         env:
           AZURE_SERVER_HOST: ${{ secrets.AZURE_SERVER_HOST }}
           AZURE_SERVER_USER: ${{ secrets.AZURE_SERVER_USER }}
+          AZURE_SSH_PRIVATE_KEY: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
         run: |
-          echo "Prototype placeholder: trigger server with generated/server-queue.json"
-          echo "Target (example): ${AZURE_SERVER_USER}@${AZURE_SERVER_HOST}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$AZURE_SSH_PRIVATE_KEY" > ~/.ssh/azure_key
+          chmod 600 ~/.ssh/azure_key
+          ssh-keyscan -H "$AZURE_SERVER_HOST" >> ~/.ssh/known_hosts
+
+      - name: Dispatch queue to Azure server
+        if: success() && steps.queuecheck.outputs.has_work == 'true' && secrets.AZURE_SERVER_HOST != '' && secrets.AZURE_SERVER_USER != '' && secrets.AZURE_SSH_PRIVATE_KEY != '' && secrets.AZURE_SERVER_REPO_PATH != ''
+        env:
+          AZURE_SERVER_HOST: ${{ secrets.AZURE_SERVER_HOST }}
+          AZURE_SERVER_USER: ${{ secrets.AZURE_SERVER_USER }}
+          AZURE_SERVER_REPO_PATH: ${{ secrets.AZURE_SERVER_REPO_PATH }}
+        run: |
+          ssh -i ~/.ssh/azure_key "$AZURE_SERVER_USER@$AZURE_SERVER_HOST" "mkdir -p '$AZURE_SERVER_REPO_PATH/generated'"
+          scp -i ~/.ssh/azure_key generated/server-queue.json "$AZURE_SERVER_USER@$AZURE_SERVER_HOST:$AZURE_SERVER_REPO_PATH/generated/server-queue.json"
+          ssh -i ~/.ssh/azure_key "$AZURE_SERVER_USER@$AZURE_SERVER_HOST" "cd '$AZURE_SERVER_REPO_PATH' && bash server/run_on_azure_example.sh"
+
+      - name: Server dispatch skipped notice
+        if: success() && (steps.queuecheck.outputs.has_work != 'true' || secrets.AZURE_SERVER_HOST == '' || secrets.AZURE_SERVER_USER == '' || secrets.AZURE_SSH_PRIVATE_KEY == '' || secrets.AZURE_SERVER_REPO_PATH == '')
+        run: |
+          if [[ "${{ steps.queuecheck.outputs.has_work }}" != "true" ]]; then
+            echo "Azure dispatch skipped: no configs passed sanity, queue is empty."
+          else
+            echo "Azure dispatch skipped: set AZURE_SERVER_HOST, AZURE_SERVER_USER, AZURE_SSH_PRIVATE_KEY, and AZURE_SERVER_REPO_PATH secrets to enable server execution."
+          fi
 
   pages-preview:
     needs: detect-and-sanity

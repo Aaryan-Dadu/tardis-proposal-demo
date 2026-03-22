@@ -1,7 +1,20 @@
+# TARDIS GSoC Approach-4 CI Environment
+# Lightweight environment for orchestrating config detection, setup.yaml generation,
+# and sanity checks on GitHub Actions.
+# Per-config environments are created separately from tardisbase lockfiles.
+
 name: tardis-gsoc-approach-4-ci
 channels:
   - conda-forge
 dependencies:
+  # Python and core tools
   - python=3.11
-  - pyyaml
-  - git
+  - pip
+  
+  # Essential for CI scripts
+  - pyyaml>=6.0         # Parse setup.yaml and config files
+  - git>=2.25           # Version control operations
+  - gitpython>=3.1.0    # Python git library for programmatic git operations
+  
+  # Data handling
+  - requests>=2.25      # Download lockfiles and resources
