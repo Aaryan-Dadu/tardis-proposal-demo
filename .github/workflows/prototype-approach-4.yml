@@ -1,0 +1,88 @@
+name: approach-4-incremental-config-pipeline
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  detect-and-sanity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up micromamba
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: tardis-gsoc-approach-4-ci
+          environment-file: envs/ci-environment.yml
+          auto-activate-base: false
+
+      - name: Detect changed configs
+        run: |
+          python scripts/detect_changed_configs.py \
+            --base-ref origin/main \
+            --head-ref HEAD \
+            --output generated/changed-configs.json
+
+      - name: Generate per-config setup.yaml
+        run: python scripts/generate_setup_yamls.py
+
+      - name: Create lightweight sanity configs
+        run: python scripts/create_sanity_configs.py
+
+      - name: Run setup.yaml sanity tests
+        run: python scripts/run_setup_yaml_sanity.py
+
+      - name: Create server queue payload
+        if: success()
+        run: python scripts/create_server_queue.py
+
+      - name: Upload CI artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: approach-4-ci-artifacts
+          path: |
+            generated/changed-configs.json
+            generated/setup-generation-manifest.json
+            generated/sanity-manifest.json
+            generated/sanity-results.json
+            generated/server-queue.json
+
+      - name: Placeholder server trigger
+        if: success()
+        env:
+          AZURE_SERVER_HOST: ${{ secrets.AZURE_SERVER_HOST }}
+          AZURE_SERVER_USER: ${{ secrets.AZURE_SERVER_USER }}
+        run: |
+          echo "Prototype placeholder: trigger server with generated/server-queue.json"
+          echo "Target (example): ${AZURE_SERVER_USER}@${AZURE_SERVER_HOST}"
+
+  pages-preview:
+    needs: detect-and-sanity
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build basic gallery page
+        run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
+
+      - name: Upload pages preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: approach-4-pages-preview
+          path: docs-site/

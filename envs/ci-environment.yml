@@ -1,0 +1,7 @@
+name: tardis-gsoc-approach-4-ci
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pyyaml
+  - git
