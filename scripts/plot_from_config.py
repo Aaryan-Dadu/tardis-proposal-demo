@@ -5,15 +5,12 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 from tardis import run_tardis
 from tardis.io.atom_data import download_atom_data
 from tardis.io.atom_data.util import resolve_atom_data_fname
 from tardis.io.configuration.config_reader import Configuration
-from tardis.visualization import LIVPlotter, SDECPlotter
 
 DEFAULT_ATOM_DATA = "kurucz_cd23_chianti_H_He_latest"
-PLOTTERS = (SDECPlotter, LIVPlotter)
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -52,10 +49,14 @@ def resolve_atom_data(atom_data: str | None) -> str:
 
 
 def save_plots(simulation, output_prefix: str, output_dir: Path, fmt: str = "png") -> list[str]:
+    import matplotlib.pyplot as plt
+    from tardis.visualization import LIVPlotter, SDECPlotter
+
+    plotters = (SDECPlotter, LIVPlotter)
     output_dir.mkdir(parents=True, exist_ok=True)
     created_files: list[str] = []
 
-    for plotter_cls in PLOTTERS:
+    for plotter_cls in plotters:
         plotter = plotter_cls.from_simulation(simulation)
         for packets_mode in ("real", "virtual"):
             artist = plotter.generate_plot_mpl(packets_mode=packets_mode)
