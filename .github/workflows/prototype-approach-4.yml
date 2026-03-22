@@ -80,6 +80,29 @@ jobs:
           print(f"Queue entries: {len(rows)}")
           PY
 
+      - name: Check Azure dispatch prerequisites
+        if: success()
+        id: dispatchcheck
+        env:
+          AZURE_SERVER_HOST: ${{ secrets.AZURE_SERVER_HOST }}
+          AZURE_SERVER_USER: ${{ secrets.AZURE_SERVER_USER }}
+          AZURE_SSH_PRIVATE_KEY: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
+          AZURE_SERVER_REPO_PATH: ${{ secrets.AZURE_SERVER_REPO_PATH }}
+        run: |
+          missing=()
+          [[ -n "$AZURE_SERVER_HOST" ]] || missing+=("AZURE_SERVER_HOST")
+          [[ -n "$AZURE_SERVER_USER" ]] || missing+=("AZURE_SERVER_USER")
+          [[ -n "$AZURE_SSH_PRIVATE_KEY" ]] || missing+=("AZURE_SSH_PRIVATE_KEY")
+          [[ -n "$AZURE_SERVER_REPO_PATH" ]] || missing+=("AZURE_SERVER_REPO_PATH")
+
+          if [[ "${#missing[@]}" -eq 0 ]]; then
+            echo "dispatch_ready=true" >> "$GITHUB_OUTPUT"
+            echo "missing_secrets=" >> "$GITHUB_OUTPUT"
+          else
+            echo "dispatch_ready=false" >> "$GITHUB_OUTPUT"
+            echo "missing_secrets=${missing[*]}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload CI artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -93,7 +116,7 @@ jobs:
             generated/server-queue.json
 
       - name: Configure SSH for Azure dispatch
-        if: success() && steps.queuecheck.outputs.has_work == 'true' && secrets.AZURE_SERVER_HOST != '' && secrets.AZURE_SERVER_USER != '' && secrets.AZURE_SSH_PRIVATE_KEY != ''
+        if: success() && steps.queuecheck.outputs.has_work == 'true' && steps.dispatchcheck.outputs.dispatch_ready == 'true'
         env:
           AZURE_SERVER_HOST: ${{ secrets.AZURE_SERVER_HOST }}
           AZURE_SERVER_USER: ${{ secrets.AZURE_SERVER_USER }}
@@ -105,7 +128,7 @@ jobs:
           ssh-keyscan -H "$AZURE_SERVER_HOST" >> ~/.ssh/known_hosts
 
       - name: Dispatch queue to Azure server
-        if: success() && steps.queuecheck.outputs.has_work == 'true' && secrets.AZURE_SERVER_HOST != '' && secrets.AZURE_SERVER_USER != '' && secrets.AZURE_SSH_PRIVATE_KEY != '' && secrets.AZURE_SERVER_REPO_PATH != ''
+        if: success() && steps.queuecheck.outputs.has_work == 'true' && steps.dispatchcheck.outputs.dispatch_ready == 'true'
         env:
           AZURE_SERVER_HOST: ${{ secrets.AZURE_SERVER_HOST }}
           AZURE_SERVER_USER: ${{ secrets.AZURE_SERVER_USER }}
@@ -116,12 +139,12 @@ jobs:
           ssh -i ~/.ssh/azure_key "$AZURE_SERVER_USER@$AZURE_SERVER_HOST" "cd '$AZURE_SERVER_REPO_PATH' && bash server/run_on_azure_example.sh"
 
       - name: Server dispatch skipped notice
-        if: success() && (steps.queuecheck.outputs.has_work != 'true' || secrets.AZURE_SERVER_HOST == '' || secrets.AZURE_SERVER_USER == '' || secrets.AZURE_SSH_PRIVATE_KEY == '' || secrets.AZURE_SERVER_REPO_PATH == '')
+        if: success() && (steps.queuecheck.outputs.has_work != 'true' || steps.dispatchcheck.outputs.dispatch_ready != 'true')
         run: |
           if [[ "${{ steps.queuecheck.outputs.has_work }}" != "true" ]]; then
             echo "Azure dispatch skipped: no configs passed sanity, queue is empty."
           else
-            echo "Azure dispatch skipped: set AZURE_SERVER_HOST, AZURE_SERVER_USER, AZURE_SSH_PRIVATE_KEY, and AZURE_SERVER_REPO_PATH secrets to enable server execution."
+            echo "Azure dispatch skipped: missing required secrets: ${{ steps.dispatchcheck.outputs.missing_secrets }}"
           fi
 
   pages-preview:
