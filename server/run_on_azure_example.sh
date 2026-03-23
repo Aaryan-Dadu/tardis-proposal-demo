@@ -12,10 +12,22 @@ if [[ ! -x "$CONDA_BIN" ]]; then
   exit 1
 fi
 
-"$CONDA_BIN" env remove -n "$CONTROL_ENV_NAME" -y >/dev/null 2>&1 || true
-"$CONDA_BIN" create -y -n "$CONTROL_ENV_NAME" python=3.13 pyyaml nbconvert nbformat
+if ! command -v git >/dev/null 2>&1; then
+  echo "git is not available on the server"
+  exit 1
+fi
 
 cd "$REPO_ROOT"
+
+echo "Resetting tracked local changes before sync..."
+git restore .
+
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+echo "Pulling latest changes from origin/${CURRENT_BRANCH}..."
+git pull --ff-only origin "$CURRENT_BRANCH"
+
+"$CONDA_BIN" env remove -n "$CONTROL_ENV_NAME" -y >/dev/null 2>&1 || true
+"$CONDA_BIN" create -y -n "$CONTROL_ENV_NAME" python=3.13 pyyaml nbconvert nbformat
 
 "$CONDA_BIN" run -n "$CONTROL_ENV_NAME" python server/process_server_queue.py \
   --queue "$QUEUE_PATH" \
