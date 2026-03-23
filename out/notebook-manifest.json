@@ -1,13 +1,13 @@
 [
   {
-    "config": "setups/2026/GSOC_2026_Paper/tardis_example.yml",
-    "notebook": "out/setups/2026/GSOC_2026_Paper/tardis_example.ipynb",
-    "notebook_exists": true,
-    "setup_yaml": "setups/2026/GSOC_2026_Paper/setup.yaml",
-    "env_name": "a4-setups-2026-GSOC-2026-Paper",
-    "status": "ok",
-    "reason": "ok",
-    "returncode": 0,
-    "stderr_tail": ""
+    "config": "setups/2033/AD_proposal_paper/skew_example.yml",
+    "notebook": "out/setups/2033/AD_proposal_paper/skew_example.ipynb",
+    "notebook_exists": false,
+    "setup_yaml": "setups/2033/AD_proposal_paper/setup.yaml",
+    "env_name": "a4-setups-2033-AD-proposal-paper",
+    "status": "failed",
+    "reason": "setup_env_failed",
+    "returncode": 1,
+    "stderr_tail": "Traceback (most recent call last):\n  File \"/home/azureuser/tardis-proposal-demo/server/setup_env_from_setup_yaml.py\", line 302, in <module>\n    main()\n    ~~~~^^\n  File \"/home/azureuser/tardis-proposal-demo/server/setup_env_from_setup_yaml.py\", line 240, in main\n    raise FileNotFoundError(f\"setup.yaml not found: {setup_yaml}\")\nFileNotFoundError: setup.yaml not found: /home/azureuser/tardis-proposal-demo/setups/2033/AD_proposal_paper/setup.yaml\n"
   }
 ]
