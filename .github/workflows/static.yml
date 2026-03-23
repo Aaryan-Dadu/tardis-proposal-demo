@@ -31,10 +31,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Ensure docs-site exists
+        run: |
+          mkdir -p docs-site
+          if [[ ! -f docs-site/index.html ]]; then
+            cat > docs-site/index.html <<'HTML'
+          <!doctype html>
+          <html><head><meta charset="utf-8"><title>TARDIS Gallery</title></head>
+          <body><h1>TARDIS Gallery</h1><p>No gallery output available yet.</p></body></html>
+          HTML
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           # Upload entire repository
           path: './docs-site'

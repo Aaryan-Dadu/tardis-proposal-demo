@@ -19,14 +19,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install gallery dependencies
+        run: python -m pip install --upgrade nbformat nbconvert
+
       - name: Build gallery page
         run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
+
+      - name: Ensure docs-site exists
+        run: |
+          mkdir -p docs-site
+          if [[ ! -f docs-site/index.html ]]; then
+            cat > docs-site/index.html <<'HTML'
+          <!doctype html>
+          <html><head><meta charset="utf-8"><title>TARDIS Gallery</title></head>
+          <body><h1>TARDIS Gallery</h1><p>No gallery output available yet.</p></body></html>
+          HTML
+          fi
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: docs-site
 
