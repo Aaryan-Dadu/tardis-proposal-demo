@@ -1,38 +1,60 @@
-# 🚀 TARDIS Approach-4: Notebook Automation Pipeline
+# 👋 Welcome Mentors — TARDIS Approach-4 Prototype
 
-This repository automates end-to-end TARDIS notebook generation from committed setup configs.
+Thank you for reviewing this proposal prototype.
 
-## 🎯 Purpose
+You have collaborator access so you can directly try the pipeline with small config edits and see the generated notebook/gallery update automatically.
 
-Build a reliable pipeline that:
-- detects changed configs in CI
-- sanity-validates changes quickly
-- runs full notebook execution on a dedicated server
-- syncs generated notebooks back into the repo
-- publishes a browsable gallery with rendered previews
+## ✅ What this prototype does
 
-## 🧩 What this project includes
+This repository automates end-to-end notebook generation:
+- detects changed setup configs in CI
+- does quick sanity validation
+- runs full notebook generation on the Azure server
+- syncs generated outputs back into this repo
+- publishes a browsable GitHub Pages gallery
 
-- CI orchestration workflow (`.github/workflows/prototype-approach-4.yml`)
-- Server execution layer (`server/`)
-- Setup/config tooling (`scripts/`)
-- Generated output areas (`generated/`, `out/`, `docs-site/`)
-- Static preview gallery for notebook browsing
+## 🚀 Quick Try
 
-## 📚 Documentation
+### 1) Make a small test change
 
-All active docs are in `docs/`:
+Edit a basic config such as:
+- `setups/tardis_example.yml`
+Any harmless, visible change is fine (for example a comment line).
+or create a similar minimal config
 
-- 🧭 Main design doc: [docs/DESIGN.md](docs/DESIGN.md)
-- 🏗️ Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- 👩‍💻 User guide: [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
-- 🗂️ File purposes: [docs/FILE_PURPOSES.md](docs/FILE_PURPOSES.md)
-- 🖥️ Server setup: [docs/SERVER_SETUP.md](docs/SERVER_SETUP.md)
-- 🧪 Environment details: [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md)
-- 🔐 Secrets/security: [docs/SECRETS.md](docs/SECRETS.md)
+### 2) Commit and push
 
-## 📦 Outputs
+```bash
+git add setups/tardis_example.yml
+git commit -m "mentor test: trigger notebook pipeline"
+git push
+```
 
-- `out/` → notebooks + `notebook-manifest.json`
-- `docs-site/` → rendered notebook gallery
-- `generated/` → CI intermediate artifacts
+### 3) Watch the workflow
+
+In GitHub Actions, open:
+- `approach-4-incremental-config-pipeline`
+
+This pipeline will detect your changed config, dispatch server execution, pull outputs back, and publish updated artifacts.
+
+### 4) Check results
+
+- Notebook execution status: Actions logs
+- Manifest details: `out/notebook-manifest.json`
+- Generated notebook(s): `out/`
+- Rendered web gallery: GitHub Pages site for this repository
+
+## ⏱️ Expected turnaround time
+
+For a basic `tardis_example.yml` change, **expect around 10 minutes** from `git push` to seeing changes reflected on GitHub Pages.
+
+Timing can vary slightly depending on queue/load, but ~10 minutes is the normal prototype target.
+
+## 📚 If you want deeper technical details
+
+- Main design: [docs/DESIGN.md](docs/DESIGN.md)
+- Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- User workflow details: [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+- Server setup: [docs/SERVER_SETUP.md](docs/SERVER_SETUP.md)
+
+---
