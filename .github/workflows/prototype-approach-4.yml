@@ -59,6 +59,7 @@ jobs:
       - name: Commit and push generated setup.yaml files
         if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: |
+          set +e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python - <<'PY'
@@ -95,7 +96,18 @@ jobs:
             exit 0
           fi
           git commit -m "Update generated setup.yaml files [skip ci]"
+          commit_rc=$?
+          if [[ $commit_rc -ne 0 ]]; then
+            echo "setup.yaml commit skipped/failed (rc=$commit_rc), continuing CI."
+            exit 0
+          fi
+
           git push
+          push_rc=$?
+          if [[ $push_rc -ne 0 ]]; then
+            echo "setup.yaml push failed (rc=$push_rc), continuing CI."
+            exit 0
+          fi
 
       - name: Create reduced configs for CI sanity run
         run: python scripts/create_sanity_configs.py
