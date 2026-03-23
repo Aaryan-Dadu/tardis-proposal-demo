@@ -20,8 +20,16 @@ fi
 
 cd "$REPO_ROOT"
 
-echo "Resetting tracked local changes before sync..."
-git restore .
+TMP_QUEUE_BACKUP=""
+if [[ -f "$QUEUE_PATH" ]]; then
+  TMP_QUEUE_BACKUP="$(mktemp /tmp/a4-server-queue.XXXXXX.json)"
+  cp "$QUEUE_PATH" "$TMP_QUEUE_BACKUP"
+  echo "Backed up queue payload to $TMP_QUEUE_BACKUP"
+fi
+
+echo "Resetting local repository to a clean state before sync..."
+git reset --hard HEAD
+git clean -fd
 
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 echo "Pulling latest changes from origin/${CURRENT_BRANCH}..."
@@ -31,6 +39,13 @@ if [[ -n "$TARGET_REF" ]]; then
   echo "Checking out target ref: $TARGET_REF"
   git fetch --all --tags --prune
   git checkout --force "$TARGET_REF"
+fi
+
+if [[ -n "$TMP_QUEUE_BACKUP" && -f "$TMP_QUEUE_BACKUP" ]]; then
+  mkdir -p "$(dirname "$QUEUE_PATH")"
+  cp "$TMP_QUEUE_BACKUP" "$QUEUE_PATH"
+  rm -f "$TMP_QUEUE_BACKUP"
+  echo "Restored queue payload to $QUEUE_PATH"
 fi
 
 "$CONDA_BIN" env remove -n "$CONTROL_ENV_NAME" -y >/dev/null 2>&1 || true
