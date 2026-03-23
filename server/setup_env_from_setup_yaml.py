@@ -166,6 +166,67 @@ def install_tardis(conda_bin: str, env_name: str, setup_data: dict, exec_env: di
     )
 
 
+def install_extra_packages(conda_bin: str, env_name: str, extras: list[str], exec_env: dict) -> None:
+    conda_cmd = [conda_bin, "install", "-y", "-n", env_name, *extras]
+    conda_result = subprocess.run(conda_cmd, check=False, env=exec_env)
+    if conda_result.returncode == 0:
+        return
+
+    pip_cmd = [
+        conda_bin,
+        "run",
+        "-n",
+        env_name,
+        "python",
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        *extras,
+    ]
+    pip_result = subprocess.run(pip_cmd, check=False)
+    if pip_result.returncode != 0:
+        raise SystemExit(pip_result.returncode)
+
+
+def ensure_notebook_runtime(conda_bin: str, env_name: str) -> None:
+    check_cmd = [
+        conda_bin,
+        "run",
+        "-n",
+        env_name,
+        "python",
+        "-c",
+        "import papermill, nbconvert, yaml, matplotlib",
+    ]
+    check_result = subprocess.run(check_cmd, check=False)
+    if check_result.returncode == 0:
+        return
+
+    install_cmd = [
+        conda_bin,
+        "run",
+        "-n",
+        env_name,
+        "python",
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "papermill",
+        "nbconvert",
+        "pyyaml",
+        "matplotlib",
+    ]
+    install_result = subprocess.run(install_cmd, check=False)
+    if install_result.returncode != 0:
+        raise SystemExit(install_result.returncode)
+
+    final_check = subprocess.run(check_cmd, check=False)
+    if final_check.returncode != 0:
+        raise SystemExit(final_check.returncode)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create conda env from setup.yaml for one config.")
     parser.add_argument("--setup-yaml", required=True)
@@ -202,8 +263,11 @@ def main() -> None:
 
     extras = setup_data.get("environment", {}).get("extra_packages", [])
     if isinstance(extras, list) and extras:
-        extra_cmd = [conda_bin, "install", "-y", "-n", env_name, *extras]
-        subprocess.run(extra_cmd, check=False, env=exec_env)
+        normalized_extras = [pkg for pkg in extras if isinstance(pkg, str) and pkg.strip()]
+        if normalized_extras:
+            install_extra_packages(conda_bin, env_name, normalized_extras, exec_env)
+
+    ensure_notebook_runtime(conda_bin, env_name)
 
     verify_cmd = [
         conda_bin,

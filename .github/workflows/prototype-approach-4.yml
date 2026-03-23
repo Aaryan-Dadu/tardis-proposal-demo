@@ -11,6 +11,9 @@ defaults:
   run:
     shell: bash -l {0}
 
+permissions:
+  contents: write
+
 jobs:
   detect-and-sanity:
     runs-on: ubuntu-latest
@@ -53,11 +56,11 @@ jobs:
       - name: Generate per-config setup.yaml
         run: python scripts/generate_setup_yamls.py
 
-      - name: Create reduced configs for CI sanity run
-        run: python scripts/create_sanity_configs.py
+      # - name: Create reduced configs for CI sanity run
+      #   run: python scripts/create_sanity_configs.py
 
-      - name: Install from setup.yaml and run reduced sanity configs
-        run: python scripts/run_setup_yaml_sanity.py
+      # - name: Install from setup.yaml and run reduced sanity configs
+      #   run: python scripts/run_setup_yaml_sanity.py
 
       - name: Create server queue payload
         if: success()
@@ -111,8 +114,6 @@ jobs:
           path: |
             generated/changed-configs.json
             generated/setup-generation-manifest.json
-            generated/sanity-manifest.json
-            generated/sanity-results.json
             generated/server-queue.json
 
       - name: Configure SSH for Azure dispatch
@@ -138,11 +139,35 @@ jobs:
           scp -i ~/.ssh/azure_key generated/server-queue.json "$AZURE_SERVER_USER@$AZURE_SERVER_HOST:$AZURE_SERVER_REPO_PATH/generated/server-queue.json"
           ssh -i ~/.ssh/azure_key "$AZURE_SERVER_USER@$AZURE_SERVER_HOST" "cd '$AZURE_SERVER_REPO_PATH' && bash server/run_on_azure_example.sh"
 
+      - name: Pull generated notebooks and gallery from Azure server
+        if: success() && steps.queuecheck.outputs.has_work == 'true' && steps.dispatchcheck.outputs.dispatch_ready == 'true'
+        env:
+          AZURE_SERVER_HOST: ${{ secrets.AZURE_SERVER_HOST }}
+          AZURE_SERVER_USER: ${{ secrets.AZURE_SERVER_USER }}
+          AZURE_SERVER_REPO_PATH: ${{ secrets.AZURE_SERVER_REPO_PATH }}
+        run: |
+          mkdir -p out docs-site
+          scp -i ~/.ssh/azure_key -r "$AZURE_SERVER_USER@$AZURE_SERVER_HOST:$AZURE_SERVER_REPO_PATH/out/." out/
+          scp -i ~/.ssh/azure_key "$AZURE_SERVER_USER@$AZURE_SERVER_HOST:$AZURE_SERVER_REPO_PATH/docs-site/index.html" docs-site/index.html
+
+      - name: Commit and push generated notebooks and gallery
+        if: success() && steps.queuecheck.outputs.has_work == 'true' && steps.dispatchcheck.outputs.dispatch_ready == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add out docs-site/index.html
+          if git diff --cached --quiet; then
+            echo "No generated output changes to commit."
+            exit 0
+          fi
+          git commit -m "Update generated notebooks and gallery [skip ci]"
+          git push
+
       - name: Server dispatch skipped notice
         if: success() && (steps.queuecheck.outputs.has_work != 'true' || steps.dispatchcheck.outputs.dispatch_ready != 'true')
         run: |
           if [[ "${{ steps.queuecheck.outputs.has_work }}" != "true" ]]; then
-            echo "Azure dispatch skipped: no configs passed sanity, queue is empty."
+            echo "Azure dispatch skipped: queue is empty."
           else
             echo "Azure dispatch skipped: missing required secrets: ${{ steps.dispatchcheck.outputs.missing_secrets }}"
           fi

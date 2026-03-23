@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from html import escape
 from pathlib import Path
 
 
@@ -27,15 +28,34 @@ HTML_TEMPLATE = """<!doctype html>
 """
 
 
-def card_html(config: str, notebook: str) -> str:
+def card_html(row: dict) -> str:
+    config = str(row.get("config", ""))
+    notebook = str(row.get("notebook", ""))
+    status = str(row.get("status", "unknown"))
+    reason = str(row.get("reason", ""))
+    notebook_exists = bool(row.get("notebook_exists", False))
+
     config_link = f"../{config}"
     notebook_link = f"../{notebook}"
+    config_name = Path(config).name if config else "(missing config)"
+
+    notebook_line = (
+        f"<p><a href='{escape(notebook_link)}'>Notebook (.ipynb)</a></p>"
+        if notebook_exists
+        else "<p class='muted'>Notebook unavailable (run failed or file missing)</p>"
+    )
+
+    status_line = f"<p class='muted'>Status: {escape(status)}</p>"
+    reason_line = f"<p class='muted'>Reason: {escape(reason)}</p>" if reason and reason != "ok" else ""
+
     return (
         "<div class='card'>"
-        f"<h3>{Path(config).name}</h3>"
-        f"<p class='muted'>{config}</p>"
-        f"<p><a href='{config_link}'>Config file</a></p>"
-        f"<p><a href='{notebook_link}'>Notebook (.ipynb)</a></p>"
+        f"<h3>{escape(config_name)}</h3>"
+        f"<p class='muted'>{escape(config)}</p>"
+        f"<p><a href='{escape(config_link)}'>Config file</a></p>"
+        f"{notebook_line}"
+        f"{status_line}"
+        f"{reason_line}"
         "</div>"
     )
 
@@ -49,7 +69,7 @@ def main() -> None:
     manifest_path = Path(args.manifest)
     rows = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else []
 
-    cards = "\n".join(card_html(row["config"], row["notebook"]) for row in rows)
+    cards = "\n".join(card_html(row) for row in rows)
     html = HTML_TEMPLATE.format(cards=cards or "<p>No notebooks generated yet.</p>")
 
     output_dir = Path(args.output_dir)
