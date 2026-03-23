@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from html import escape
 from pathlib import Path
 
@@ -16,19 +17,268 @@ HTML_TEMPLATE = """<!doctype html>
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
   <title>TARDIS Approach-4 Notebook Gallery</title>
   <style>
-    body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; background: #0b1020; color: #e8edf7; }}
-    .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1rem; }}
-    .card {{ border: 1px solid #2a3558; border-radius: 12px; padding: 1rem; background: #111935; }}
-    .muted {{ color: #aeb9d6; font-size: 0.9rem; }}
-    a {{ color: #8ec5ff; }}
-    .ok {{ color: #8ce99a; }}
-    .failed {{ color: #ff9ba5; }}
+    :root {{
+      --page-bg: #f6f9fe;
+      --surface: #ffffff;
+      --surface-border: #d9e3f2;
+      --text-main: #1f2a44;
+      --text-muted: #5f6f8d;
+      --brand: #335d9b;
+      --brand-soft: #e9f0fb;
+      --ok: #1d7a3d;
+      --ok-bg: #e9f8ee;
+      --fail: #ad2336;
+      --fail-bg: #fdecef;
+      --shadow: 0 8px 20px rgba(31, 42, 68, 0.08);
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(180deg, #f2f7ff 0%, var(--page-bg) 240px);
+      color: var(--text-main);
+    }}
+    .container {{
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 2.5rem;
+    }}
+    .hero {{
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1rem;
+    }}
+    h1 {{
+      margin: 0 0 0.45rem 0;
+      font-size: 1.65rem;
+      line-height: 1.2;
+      color: #1b2f5b;
+    }}
+    .subtitle {{
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.96rem;
+    }}
+    .summary {{
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }}
+    .pill {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border-radius: 999px;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      border: 1px solid var(--surface-border);
+      background: var(--brand-soft);
+      color: var(--brand);
+    }}
+    .pill.ok {{ background: var(--ok-bg); color: var(--ok); border-color: #bfe6cb; }}
+    .pill.fail {{ background: var(--fail-bg); color: var(--fail); border-color: #f5bfca; }}
+
+    .controls {{
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.75rem;
+      margin-top: 0.9rem;
+      align-items: center;
+    }}
+    .search {{
+      width: 100%;
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 0.62rem 0.75rem;
+      font-size: 0.92rem;
+      color: var(--text-main);
+      background: #fff;
+    }}
+    .filter-row {{
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }}
+    .chip {{
+      border: 1px solid var(--surface-border);
+      background: #fff;
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 0.36rem 0.66rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 600;
+    }}
+    .chip.active {{
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }}
+
+    .grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+      gap: 1rem;
+      align-items: start;
+    }}
+    .card {{
+      border: 1px solid var(--surface-border);
+      border-radius: 14px;
+      padding: 1rem;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }}
+    .title-row {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.35rem;
+    }}
+    .card h3 {{ margin: 0; font-size: 1.03rem; color: #1a2b4e; }}
+    .muted {{ color: var(--text-muted); font-size: 0.9rem; margin: 0.2rem 0 0.7rem; }}
+    .status-badge {{
+      border-radius: 999px;
+      padding: 0.22rem 0.58rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      border: 1px solid;
+      white-space: nowrap;
+    }}
+    .status-ok {{ color: var(--ok); background: var(--ok-bg); border-color: #bfe6cb; }}
+    .status-failed {{ color: var(--fail); background: var(--fail-bg); border-color: #f5bfca; }}
+
+    .meta {{
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.35rem 0.7rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }}
+    .meta .label {{ font-weight: 600; color: #4a5f84; }}
+
+    .actions {{ display: flex; gap: 0.55rem; flex-wrap: wrap; margin: 0.35rem 0 0.75rem 0; }}
+    .btn {{
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 0.42rem 0.72rem;
+      background: #fff;
+      color: var(--brand);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }}
+    .btn:hover {{ border-color: #b8c9e5; background: #f6faff; }}
+    .btn.primary {{ background: var(--brand); color: #fff; border-color: var(--brand); }}
+
+    .preview-toggle {{
+      margin-top: 0.35rem;
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      background: #f8fbff;
+      overflow: hidden;
+    }}
+    .preview-toggle > summary {{
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 600;
+      color: #2a4778;
+      padding: 0.58rem 0.72rem;
+      border-bottom: 1px solid transparent;
+    }}
+    .preview-toggle[open] > summary {{
+      border-bottom-color: var(--surface-border);
+      background: #eef4ff;
+    }}
+    .preview-wrap {{
+      border-top: 1px solid var(--surface-border);
+      background: #fff;
+    }}
+    .preview {{ width: 100%; height: 560px; border: 0; background: #fff; }}
+    .preview-empty {{
+      border: 1px dashed var(--surface-border);
+      border-radius: 10px;
+      color: var(--text-muted);
+      padding: 0.65rem;
+      font-size: 0.86rem;
+      background: #fbfdff;
+    }}
+    .hidden {{ display: none !important; }}
+
+    .reason {{
+      margin-top: 0.7rem;
+      border: 1px dashed #f1bac5;
+      border-radius: 8px;
+      background: #fff7f9;
+      color: #8d2f3f;
+      padding: 0.52rem 0.62rem;
+      font-size: 0.83rem;
+    }}
+
+    @media (max-width: 900px) {{
+      .controls {{ grid-template-columns: 1fr; }}
+      .grid {{ grid-template-columns: 1fr; }}
+      .preview {{ height: 440px; }}
+    }}
   </style>
 </head>
 <body>
-  <h1>TARDIS Approach-4 Notebook Gallery</h1>
-  <p class=\"muted\">Rendered notebook reports generated per config.</p>
-  <div class=\"grid\">{cards}</div>
+  <div class=\"container\">
+    <section class=\"hero\">
+      <h1>TARDIS Approach-4 Notebook Gallery</h1>
+      <p class=\"subtitle\">Rendered notebook reports generated per configuration run.</p>
+      <div class=\"summary\">{summary}</div>
+      <div class=\"controls\">
+        <input id=\"searchInput\" class=\"search\" type=\"search\" placeholder=\"Search by config name or path...\" />
+        <div class=\"filter-row\" role=\"group\" aria-label=\"Status filters\">
+          <button class=\"chip active\" data-filter=\"all\" type=\"button\">All</button>
+          <button class=\"chip\" data-filter=\"ok\" type=\"button\">Successful</button>
+          <button class=\"chip\" data-filter=\"failed\" type=\"button\">Failed</button>
+        </div>
+      </div>
+    </section>
+    <div class=\"grid\">{cards}</div>
+  </div>
+  <script>
+    (() => {{
+      const cards = [...document.querySelectorAll('[data-card]')];
+      const searchInput = document.getElementById('searchInput');
+      const chips = [...document.querySelectorAll('.chip')];
+      let activeFilter = 'all';
+
+      const applyFilters = () => {{
+        const query = (searchInput?.value || '').toLowerCase().trim();
+        cards.forEach((card) => {{
+          const status = (card.dataset.status || '').toLowerCase();
+          const text = (card.dataset.search || '').toLowerCase();
+          const statusOk = activeFilter === 'all' || status === activeFilter;
+          const textOk = !query || text.includes(query);
+          card.classList.toggle('hidden', !(statusOk && textOk));
+        }});
+      }};
+
+      searchInput?.addEventListener('input', applyFilters);
+      chips.forEach((chip) => {{
+        chip.addEventListener('click', () => {{
+          chips.forEach((c) => c.classList.remove('active'));
+          chip.classList.add('active');
+          activeFilter = chip.dataset.filter || 'all';
+          applyFilters();
+        }});
+      }});
+    }})();
+  </script>
 </body>
 </html>
 """
@@ -45,6 +295,8 @@ def render_notebook_html(notebook_path: Path, output_dir: Path) -> str:
         nb = nbformat.read(fh, as_version=4)
 
     exporter = HTMLExporter(template_name="lab")
+    exporter.exclude_input_prompt = True
+    exporter.exclude_output_prompt = True
     body, _ = exporter.from_notebook_node(nb)
     rendered_file.write_text(body, encoding="utf-8")
     return f"notebooks/{safe_html_name}"
@@ -63,31 +315,38 @@ def card_html(row: dict, output_dir: Path) -> str:
 
     rendered_html_link = ""
     if notebook_exists:
-      notebook_path = Path(notebook)
-      if notebook_path.exists():
-        rendered_html_link = render_notebook_html(notebook_path, output_dir)
+        notebook_path = Path(notebook)
+        if notebook_path.exists():
+            rendered_html_link = render_notebook_html(notebook_path, output_dir)
 
     notebook_line = (
-      f"<p><a href='{escape(rendered_html_link)}'>Open rendered notebook</a></p><p><a href='{escape(notebook_link)}'>Raw notebook (.ipynb)</a></p>"
-      if rendered_html_link
-      else (
-        f"<p><a href='{escape(notebook_link)}'>Raw notebook (.ipynb)</a></p>"
-        if notebook_exists
-        else "<p class='muted'>Notebook unavailable (run failed or file missing)</p>"
-      )
+        (
+            f"<div class='actions'><a class='btn primary' href='{escape(rendered_html_link)}' target='_blank' rel='noopener'>Open Rendered Notebook</a>"
+            f"<a class='btn' href='{escape(notebook_link)}'>Download .ipynb</a></div>"
+            f"<details class='preview-toggle'><summary>Inline Preview</summary><div class='preview-wrap'><iframe class='preview' src='{escape(rendered_html_link)}' loading='lazy'></iframe></div></details>"
+        )
+        if rendered_html_link
+        else (
+            f"<div class='actions'><a class='btn' href='{escape(notebook_link)}'>Download .ipynb</a></div><div class='preview-empty'>Rendered preview is not available for this run.</div>"
+            if notebook_exists
+            else "<p class='muted'>Notebook unavailable (run failed or file missing)</p>"
+        )
     )
 
     status_class = "ok" if status == "ok" else "failed"
-    status_line = f"<p class='muted'>Status: <span class='{status_class}'>{escape(status)}</span></p>"
-    reason_line = f"<p class='muted'>Reason: {escape(reason)}</p>" if reason and reason != "ok" else ""
+    status_badge = "status-ok" if status == "ok" else "status-failed"
+    reason_line = (
+        f"<div class='reason'><strong>Reason:</strong> {escape(reason)}</div>"
+        if reason and reason != "ok"
+        else ""
+    )
 
     return (
-        "<div class='card'>"
-        f"<h3>{escape(config_name)}</h3>"
+        f"<div class='card' data-card='1' data-status='{escape(status_class)}' data-search='{escape(config + ' ' + config_name)}'>"
+        f"<div class='title-row'><h3>{escape(config_name)}</h3><span class='status-badge {status_badge}'>{escape(status_class)}</span></div>"
         f"<p class='muted'>{escape(config)}</p>"
-        f"<p><a href='{escape(config_link)}'>Config file</a></p>"
+        f"<div class='meta'><span class='label'>Config</span><span><a href='{escape(config_link)}'>{escape(config_name)}</a></span><span class='label'>Notebook</span><span>{escape(Path(notebook).name if notebook else '-')}</span></div>"
         f"{notebook_line}"
-        f"{status_line}"
         f"{reason_line}"
         "</div>"
     )
@@ -104,8 +363,24 @@ def main() -> None:
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    rendered_dir = output_dir / "notebooks"
+    if rendered_dir.exists():
+        shutil.rmtree(rendered_dir)
+
+    total = len(rows)
+    ok_count = sum(1 for row in rows if str(row.get("status", "")) == "ok")
+    fail_count = sum(1 for row in rows if str(row.get("status", "")) != "ok")
+    summary_html = (
+        f"<span class='pill'>Total: {total}</span>"
+        f"<span class='pill ok'>Successful: {ok_count}</span>"
+        f"<span class='pill fail'>Failed: {fail_count}</span>"
+    )
+
     cards = "\n".join(card_html(row, output_dir) for row in rows)
-    html = HTML_TEMPLATE.format(cards=cards or "<p>No notebooks generated yet.</p>")
+    html = HTML_TEMPLATE.format(
+        summary=summary_html,
+        cards=cards or "<div class='card'><p class='muted'>No notebooks generated yet.</p></div>",
+    )
     (output_dir / "index.html").write_text(html, encoding="utf-8")
     print(f"Gallery written to {output_dir / 'index.html'}")
 
