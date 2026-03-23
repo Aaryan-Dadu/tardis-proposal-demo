@@ -112,6 +112,15 @@ def main() -> None:
             }
         )
 
+        # Clean up conda environment after successful execution
+        if result.returncode == 0:
+            cleanup_cmd = [conda_bin, "remove", "-n", env_name, "--all", "-y"]
+            cleanup_result = subprocess.run(cleanup_cmd, check=False)
+            if cleanup_result.returncode == 0:
+                print(f"Cleaned up conda environment: {env_name}")
+            else:
+                print(f"Warning: Failed to clean up conda environment {env_name}")
+
     manifest = output_root / "notebook-manifest.json"
     manifest.write_text(json.dumps(generated, indent=2) + "\n", encoding="utf-8")
     print(f"Generated {len(generated)} notebook(s)")
