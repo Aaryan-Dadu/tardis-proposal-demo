@@ -89,6 +89,7 @@ def main() -> None:
     output_root.mkdir(parents=True, exist_ok=True)
     repo_root = Path.cwd().resolve()
     conda_bin = resolve_conda_bin(args.conda_bin)
+    template_path = (repo_root / "templates/config_report_template.ipynb").resolve()
 
     generated = []
     for item in queue:
@@ -168,6 +169,8 @@ def main() -> None:
             atom_data,
             "--output-notebook",
             str(target),
+            "--template",
+            str(template_path),
         ]
         result = subprocess.run(cmd, check=False, capture_output=True, text=True)
         generated.append(
@@ -176,6 +179,7 @@ def main() -> None:
                 "notebook": notebook_path_for_manifest,
                 "notebook_exists": target.exists(),
                 "setup_yaml": setup_yaml,
+                "template": str(template_path),
                 "env_name": env_name,
                 "status": "ok" if result.returncode == 0 else "failed",
                 "reason": "notebook_execution_failed" if result.returncode != 0 else "ok",

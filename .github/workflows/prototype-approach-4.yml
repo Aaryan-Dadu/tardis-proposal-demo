@@ -165,9 +165,10 @@ jobs:
           AZURE_SERVER_USER: ${{ secrets.AZURE_SERVER_USER }}
           AZURE_SERVER_REPO_PATH: ${{ secrets.AZURE_SERVER_REPO_PATH }}
         run: |
+          DISPATCH_REF="$(git rev-parse HEAD)"
           ssh -i ~/.ssh/azure_key "$AZURE_SERVER_USER@$AZURE_SERVER_HOST" "mkdir -p '$AZURE_SERVER_REPO_PATH/generated'"
           scp -i ~/.ssh/azure_key generated/server-queue.json "$AZURE_SERVER_USER@$AZURE_SERVER_HOST:$AZURE_SERVER_REPO_PATH/generated/server-queue.json"
-          ssh -i ~/.ssh/azure_key "$AZURE_SERVER_USER@$AZURE_SERVER_HOST" "cd '$AZURE_SERVER_REPO_PATH' && bash server/run_on_azure_example.sh"
+          ssh -i ~/.ssh/azure_key "$AZURE_SERVER_USER@$AZURE_SERVER_HOST" "cd '$AZURE_SERVER_REPO_PATH' && TARGET_REF='$DISPATCH_REF' bash server/run_on_azure_example.sh"
 
       - name: Pull generated notebooks and gallery from Azure server
         if: success() && steps.queuecheck.outputs.has_work == 'true' && steps.dispatchcheck.outputs.dispatch_ready == 'true'

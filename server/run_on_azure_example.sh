@@ -6,6 +6,7 @@ QUEUE_PATH="${QUEUE_PATH:-$REPO_ROOT/generated/server-queue.json}"
 OUT_ROOT="${OUT_ROOT:-$REPO_ROOT/out}"
 CONDA_BIN="${CONDA_BIN:-$HOME/miniconda3/bin/conda}"
 CONTROL_ENV_NAME="${CONTROL_ENV_NAME:-a4-control}"
+TARGET_REF="${TARGET_REF:-}"
 
 if [[ ! -x "$CONDA_BIN" ]]; then
   echo "Conda binary not found at $CONDA_BIN"
@@ -25,6 +26,12 @@ git restore .
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 echo "Pulling latest changes from origin/${CURRENT_BRANCH}..."
 git pull --ff-only origin "$CURRENT_BRANCH"
+
+if [[ -n "$TARGET_REF" ]]; then
+  echo "Checking out target ref: $TARGET_REF"
+  git fetch --all --tags --prune
+  git checkout --force "$TARGET_REF"
+fi
 
 "$CONDA_BIN" env remove -n "$CONTROL_ENV_NAME" -y >/dev/null 2>&1 || true
 "$CONDA_BIN" create -y -n "$CONTROL_ENV_NAME" python=3.13 pyyaml nbconvert nbformat
