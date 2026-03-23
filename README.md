@@ -50,6 +50,9 @@ For a basic `tardis_example.yml` change, **expect around 10 minutes** from `git 
 
 Timing can vary slightly depending on queue/load, but ~10 minutes is the normal prototype target.
 
+Meanwhile, you can directly browse the 2–3 notebooks already generated here:
+- https://aaryan-dadu.github.io/tardis-proposal-demo/
+
 ## 📚 If you want deeper technical details
 
 - Main design: [docs/DESIGN.md](docs/DESIGN.md)
