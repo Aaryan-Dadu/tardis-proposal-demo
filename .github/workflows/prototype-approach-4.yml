@@ -56,11 +56,11 @@ jobs:
       - name: Generate per-config setup.yaml
         run: python scripts/generate_setup_yamls.py
 
-      # - name: Create reduced configs for CI sanity run
-      #   run: python scripts/create_sanity_configs.py
+      - name: Create reduced configs for CI sanity run
+        run: python scripts/create_sanity_configs.py
 
-      # - name: Install from setup.yaml and run reduced sanity configs
-      #   run: python scripts/run_setup_yaml_sanity.py
+      - name: Install from setup.yaml and run reduced sanity configs
+        run: python scripts/run_setup_yaml_sanity.py
 
       - name: Create server queue payload
         if: success()
@@ -114,6 +114,8 @@ jobs:
           path: |
             generated/changed-configs.json
             generated/setup-generation-manifest.json
+            generated/sanity-manifest.json
+            generated/sanity-results.json
             generated/server-queue.json
 
       - name: Configure SSH for Azure dispatch
@@ -148,14 +150,14 @@ jobs:
         run: |
           mkdir -p out docs-site
           scp -i ~/.ssh/azure_key -r "$AZURE_SERVER_USER@$AZURE_SERVER_HOST:$AZURE_SERVER_REPO_PATH/out/." out/
-          scp -i ~/.ssh/azure_key "$AZURE_SERVER_USER@$AZURE_SERVER_HOST:$AZURE_SERVER_REPO_PATH/docs-site/index.html" docs-site/index.html
+          scp -i ~/.ssh/azure_key -r "$AZURE_SERVER_USER@$AZURE_SERVER_HOST:$AZURE_SERVER_REPO_PATH/docs-site/." docs-site/
 
       - name: Commit and push generated notebooks and gallery
         if: success() && steps.queuecheck.outputs.has_work == 'true' && steps.dispatchcheck.outputs.dispatch_ready == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add out docs-site/index.html
+          git add out docs-site
           if git diff --cached --quiet; then
             echo "No generated output changes to commit."
             exit 0
@@ -179,6 +181,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install gallery rendering dependencies
+        run: python -m pip install --upgrade nbformat nbconvert
 
       - name: Build basic gallery page
         run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
