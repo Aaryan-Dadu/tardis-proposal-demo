@@ -5,6 +5,8 @@ import json
 import subprocess
 from pathlib import Path
 
+from scripts.generate_setup_yamls import create_setup_yaml, extract_atom_data, infer_tardis_spec
+
 
 def resolve_conda_bin(explicit_conda_bin: str | None) -> str:
     if explicit_conda_bin:
@@ -44,6 +46,37 @@ def tail_text(text: str, max_lines: int = 40) -> str:
     return "\n".join(lines[-max_lines:])
 
 
+def resolve_setup_yaml(item: dict, repo_root: Path) -> str:
+    setup_yaml_raw = item.get("setup_yaml")
+    if not setup_yaml_raw:
+        raise ValueError("setup_yaml missing in queue item")
+
+    setup_yaml_path = Path(setup_yaml_raw)
+    if not setup_yaml_path.is_absolute():
+        setup_yaml_path = (repo_root / setup_yaml_path).resolve()
+
+    if setup_yaml_path.exists():
+        return str(setup_yaml_path)
+
+    config_path = Path(item["config"])
+    if not config_path.is_absolute():
+        config_path = (repo_root / config_path).resolve()
+
+    if not config_path.exists():
+        raise FileNotFoundError(f"config not found while regenerating setup.yaml: {config_path}")
+
+    tardis_spec = item.get("tardis_conda_spec")
+    if not isinstance(tardis_spec, str) or not tardis_spec.strip():
+        tardis_spec = infer_tardis_spec(config_path)
+
+    atom_data = item.get("atom_data")
+    if not isinstance(atom_data, str) or not atom_data.strip():
+        atom_data = extract_atom_data(config_path)
+
+    regenerated = create_setup_yaml(config_path, tardis_spec, atom_data)
+    return str(regenerated.resolve())
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Process server queue and generate notebooks.")
     parser.add_argument("--queue", default="generated/server-queue.json")
@@ -61,10 +94,29 @@ def main() -> None:
     for item in queue:
         config = item["config"]
         atom_data = item.get("atom_data", "kurucz_cd23_chianti_H_He_latest")
-        setup_yaml = item.get("setup_yaml")
+        try:
+            setup_yaml = resolve_setup_yaml(item, repo_root)
+        except Exception as exc:  # noqa: BLE001
+            target = (output_root / Path(config).parent / f"{Path(config).stem}.ipynb").resolve()
+            try:
+                notebook_path_for_manifest = str(target.relative_to(repo_root))
+            except ValueError:
+                notebook_path_for_manifest = str(target)
 
-        if not setup_yaml:
-            print(f"Skipping {config}: setup_yaml missing in queue item")
+            generated.append(
+                {
+                    "config": config,
+                    "notebook": notebook_path_for_manifest,
+                    "notebook_exists": target.exists(),
+                    "setup_yaml": item.get("setup_yaml"),
+                    "env_name": "",
+                    "status": "failed",
+                    "reason": "setup_yaml_missing_or_invalid",
+                    "returncode": 1,
+                    "stderr_tail": str(exc),
+                }
+            )
+            print(f"Skipping {config}: {exc}")
             continue
 
         env_name = sanitize_env_name(str(Path(setup_yaml).parent))

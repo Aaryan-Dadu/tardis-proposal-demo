@@ -56,6 +56,34 @@ jobs:
       - name: Generate per-config setup.yaml
         run: python scripts/generate_setup_yamls.py
 
+      - name: Commit and push generated setup.yaml files
+        if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          manifest = Path("generated/setup-generation-manifest.json")
+          if not manifest.exists():
+              raise SystemExit(0)
+
+          rows = json.loads(manifest.read_text(encoding="utf-8"))
+          paths = sorted({row.get("setup_yaml", "") for row in rows if row.get("setup_yaml")})
+          if not paths:
+              raise SystemExit(0)
+
+          subprocess.run(["git", "add", *paths], check=False)
+          PY
+          if git diff --cached --quiet; then
+            echo "No setup.yaml changes to commit."
+            exit 0
+          fi
+          git commit -m "Update generated setup.yaml files [skip ci]"
+          git push
+
       - name: Create reduced configs for CI sanity run
         run: python scripts/create_sanity_configs.py
 
