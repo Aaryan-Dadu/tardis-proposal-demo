@@ -27,6 +27,23 @@ def sanitize_env_name(seed: str) -> str:
     return ("a4-" + safe)[:80]
 
 
+def cleanup_conda_env(conda_bin: str, env_name: str) -> None:
+    """Remove conda environment after use to save disk space."""
+    cleanup_cmd = [conda_bin, "remove", "-n", env_name, "--all", "-y"]
+    result = subprocess.run(cleanup_cmd, check=False, capture_output=True)
+    if result.returncode == 0:
+        print(f"Cleaned up environment: {env_name}")
+    else:
+        print(f"Warning: failed to cleanup environment {env_name}")
+
+
+def tail_text(text: str, max_lines: int = 40) -> str:
+    lines = text.splitlines()
+    if len(lines) <= max_lines:
+        return text
+    return "\n".join(lines[-max_lines:])
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Process server queue and generate notebooks.")
     parser.add_argument("--queue", default="generated/server-queue.json")
@@ -61,7 +78,7 @@ def main() -> None:
             "--conda-bin",
             conda_bin,
         ]
-        setup_result = subprocess.run(setup_cmd, check=False)
+        setup_result = subprocess.run(setup_cmd, check=False, capture_output=True, text=True)
 
         target = (output_root / Path(config).parent / f"{Path(config).stem}.ipynb").resolve()
         try:
@@ -80,8 +97,10 @@ def main() -> None:
                     "status": "failed",
                     "reason": "setup_env_failed",
                     "returncode": setup_result.returncode,
+                    "stderr_tail": tail_text(setup_result.stderr or ""),
                 }
             )
+            cleanup_conda_env(conda_bin, env_name)
             continue
 
         cmd = [
@@ -98,7 +117,7 @@ def main() -> None:
             "--output-notebook",
             str(target),
         ]
-        result = subprocess.run(cmd, check=False)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
         generated.append(
             {
                 "config": config,
@@ -109,17 +128,10 @@ def main() -> None:
                 "status": "ok" if result.returncode == 0 else "failed",
                 "reason": "notebook_execution_failed" if result.returncode != 0 else "ok",
                 "returncode": result.returncode,
+                "stderr_tail": tail_text(result.stderr or "") if result.returncode != 0 else "",
             }
         )
-
-        # Clean up conda environment after successful execution
-        if result.returncode == 0:
-            cleanup_cmd = [conda_bin, "remove", "-n", env_name, "--all", "-y"]
-            cleanup_result = subprocess.run(cleanup_cmd, check=False)
-            if cleanup_result.returncode == 0:
-                print(f"Cleaned up conda environment: {env_name}")
-            else:
-                print(f"Warning: Failed to clean up conda environment {env_name}")
+        cleanup_conda_env(conda_bin, env_name)
 
     manifest = output_root / "notebook-manifest.json"
     manifest.write_text(json.dumps(generated, indent=2) + "\n", encoding="utf-8")
