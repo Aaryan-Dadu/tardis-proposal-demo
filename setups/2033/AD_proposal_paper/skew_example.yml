@@ -7,7 +7,7 @@ supernova:
   luminosity_wavelength_end: 8500 angstrom
   time_explosion: 3.0 day
 
-atom_data: /Users/marcwilliamson/Research/TARDIS/tardis-refdata/atom_data/kurucz_cd23_chianti_H_He.h5
+atom_data: /Users/marcwilliamson/Research/TARDIS/tardis-refdata/atom_data/kurucz_cd23_chianti_H_He_latest.h5
 
 model:
   structure:
