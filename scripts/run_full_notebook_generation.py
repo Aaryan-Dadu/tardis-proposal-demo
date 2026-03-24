@@ -6,6 +6,7 @@ Executes directly in CI without server dispatch (dev-only-ci workflow).
 
 import json
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -60,19 +61,21 @@ def run_papermill_for_config(
         "papermill",
         "--log-level", "INFO",
         "-k", "python3",
-        "-p", "config_path", str(config_path),
-        "-p", "atom_data", atom_data,
         str(template_path),
         str(output_nb),
     ]
     
     try:
+        run_env = os.environ.copy()
+        run_env["CONFIG_PATH"] = str(config_path)
+        run_env["ATOM_DATA"] = atom_data
         result = subprocess.run(
             cmd,
             check=False,
             capture_output=False,
             text=True,
             timeout=3600,  # 60 min timeout per notebook
+            env=run_env,
         )
         
         if result.returncode == 0:
@@ -112,6 +115,17 @@ def ensure_conda_env(setup_yaml: Path, env_name: str) -> bool:
     ]
     result = subprocess.run(cmd, check=False)
     return result.returncode == 0
+
+
+def normalize_atom_data(atom_data: str) -> str:
+    candidate = atom_data.strip()
+    if not candidate:
+        return "kurucz_cd23_chianti_H_He_latest"
+
+    candidate_path = Path(candidate)
+    if candidate_path.suffix.lower() == ".h5" and not candidate_path.exists():
+        return candidate_path.stem
+    return candidate
 
 
 def create_notebook_manifest(output_dir: Path) -> None:
@@ -184,7 +198,9 @@ def main() -> int:
             continue
 
         env_name = env_name_for_config(config_path)
-        atom_data = str(entry.get("atom_data") or setup_data.get("config", {}).get("atom_data") or "kurucz_cd23_chianti_H_He_latest")
+        atom_data = normalize_atom_data(
+            str(entry.get("atom_data") or setup_data.get("config", {}).get("atom_data") or "kurucz_cd23_chianti_H_He_latest")
+        )
         logger.info(f"Preparing environment for {config_path.name}: {env_name}")
         if not ensure_conda_env(setup_yaml_path, env_name):
             logger.error(f"✗ Environment setup failed for {setup_yaml_path}")
