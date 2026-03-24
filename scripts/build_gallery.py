@@ -653,6 +653,26 @@ def merge_manifest_with_discovered_notebooks(rows: list[dict], out_root: Path) -
 
     return normalized_rows + discovered_entries
 
+def load_manifest_rows(manifest_path: Path) -> list[dict]:
+    if not manifest_path.exists():
+        return []
+
+    raw = manifest_path.read_text(encoding="utf-8").strip()
+    if not raw:
+        return []
+
+    try:
+        loaded = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        print(f"Warning: invalid JSON in manifest {manifest_path}: {exc}")
+        return []
+
+    if isinstance(loaded, list):
+        return [row for row in loaded if isinstance(row, dict)]
+
+    print(f"Warning: manifest {manifest_path} is not a JSON list; ignoring content.")
+    return []
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build static notebook gallery page.")
@@ -661,7 +681,7 @@ def main() -> None:
     args = parser.parse_args()
 
     manifest_path = Path(args.manifest)
-    rows = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else []
+    rows = load_manifest_rows(manifest_path)
     rows = merge_manifest_with_discovered_notebooks(rows, Path("out"))
 
     output_dir = Path(args.output_dir)
