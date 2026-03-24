@@ -82,10 +82,16 @@ def generate_plots_from_config(
     output_prefix = output_prefix or config_path.stem
 
     config = Configuration.from_yaml(str(config_path))
+    try:
+        config.montecarlo.tracking.track_rpacket = True
+    except Exception:
+        pass
+
     simulation = run_tardis(
         config,
         atom_data=resolve_atom_data(atom_data),
         virtual_packet_logging=True,
+        show_convergence_plots=True,
     )
     if sanity_only:
         return []
