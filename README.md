@@ -4,6 +4,8 @@ Thank you for reviewing this proposal prototype.
 
 You have collaborator access so you can directly try the pipeline with small config edits and see the generated notebook/gallery update automatically.
 
+**This prototype's code is written with assist of AI/LLMs and due to time constraint I haven't reviewed the codebase thoroughly apart from the major functionalities but as its just a protoype its main purpose is just to show you what I designed, what my plans are, and a preview of what my understanding reflect from the projects description. I will be submitting my proposal very shortly too describing why I chose this approach, more depth about this approach, my research and other related details. And as discussed with [Andrew](https://github.com/andrewfullard) as we will run the notebooks in a server so to mimick that I am executing the notebooks in my Azure based VM.**
+
 ## ✅ What this prototype does
 
 This repository automates end-to-end notebook generation:
