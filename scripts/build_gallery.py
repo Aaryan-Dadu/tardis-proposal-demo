@@ -607,52 +607,51 @@ def card_html(row: dict, output_dir: Path) -> str:
         f"</article>"
     )
 
-
-    def infer_config_from_notebook_path(notebook_path: Path) -> str:
-      if notebook_path.parts and notebook_path.parts[0] == "out":
+def infer_config_from_notebook_path(notebook_path: Path) -> str:
+    if notebook_path.parts and notebook_path.parts[0] == "out":
         relative = Path(*notebook_path.parts[1:])
-      else:
+    else:
         relative = notebook_path
 
-      base = Path("setups") / relative.parent / f"{relative.stem}.yml"
-      for candidate in (base, base.with_suffix(".yaml"), base.with_suffix(".csvy")):
+    base = Path("setups") / relative.parent / f"{relative.stem}.yml"
+    for candidate in (base, base.with_suffix(".yaml"), base.with_suffix(".csvy")):
         if candidate.exists():
-          return candidate.as_posix()
-      return base.as_posix()
+            return candidate.as_posix()
+    return base.as_posix()
 
 
-    def merge_manifest_with_discovered_notebooks(rows: list[dict], out_root: Path) -> list[dict]:
-      if not out_root.exists():
+def merge_manifest_with_discovered_notebooks(rows: list[dict], out_root: Path) -> list[dict]:
+    if not out_root.exists():
         return rows
 
-      normalized_rows = [row for row in rows if isinstance(row, dict)]
-      existing_notebooks = {
+    normalized_rows = [row for row in rows if isinstance(row, dict)]
+    existing_notebooks = {
         str(row.get("notebook", "")).replace("\\", "/")
         for row in normalized_rows
         if isinstance(row.get("notebook"), str)
-      }
+    }
 
-      discovered_entries: list[dict] = []
-      for notebook in sorted(out_root.rglob("*.ipynb")):
+    discovered_entries: list[dict] = []
+    for notebook in sorted(out_root.rglob("*.ipynb")):
         notebook_rel = notebook.as_posix()
         if notebook_rel in existing_notebooks:
-          continue
+            continue
 
         discovered_entries.append(
-          {
-            "config": infer_config_from_notebook_path(Path(notebook_rel)),
-            "notebook": notebook_rel,
-            "notebook_exists": True,
-            "setup_yaml": "",
-            "env_name": "",
-            "status": "ok",
-            "reason": "discovered_from_out",
-            "returncode": 0,
-            "stderr_tail": "",
-          }
+            {
+                "config": infer_config_from_notebook_path(Path(notebook_rel)),
+                "notebook": notebook_rel,
+                "notebook_exists": True,
+                "setup_yaml": "",
+                "env_name": "",
+                "status": "ok",
+                "reason": "discovered_from_out",
+                "returncode": 0,
+                "stderr_tail": "",
+            }
         )
 
-      return normalized_rows + discovered_entries
+    return normalized_rows + discovered_entries
 
 
 def main() -> None:
