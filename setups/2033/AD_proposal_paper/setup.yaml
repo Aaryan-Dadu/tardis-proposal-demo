@@ -18,4 +18,4 @@ tardis:
   conda_spec: tardis-sn
 config:
   path: setups/2033/AD_proposal_paper/skew_example.yml
-  atom_data: /Users/marcwilliamson/Research/TARDIS/tardis-refdata/atom_data/kurucz_cd23_chianti_H_He.h5
+  atom_data: /Users/marcwilliamson/Research/TARDIS/tardis-refdata/atom_data/kurucz_cd23_chianti_H_He_latest.h5
