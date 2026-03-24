@@ -3,9 +3,16 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
 
-from scripts.generate_setup_yamls import create_setup_yaml, extract_atom_data, infer_tardis_spec
+try:
+    from scripts.generate_setup_yamls import create_setup_yaml, extract_atom_data, infer_tardis_spec
+except ModuleNotFoundError:
+    repo_root = Path(__file__).resolve().parent.parent
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    from scripts.generate_setup_yamls import create_setup_yaml, extract_atom_data, infer_tardis_spec
 
 
 def resolve_conda_bin(explicit_conda_bin: str | None) -> str:
