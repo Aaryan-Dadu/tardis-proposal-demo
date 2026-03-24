@@ -18,4 +18,4 @@ tardis:
   conda_spec: tardis-sn
 config:
   path: setups/williamson_19ewu/19ewu.yml
-  atom_data: kurucz_cd23_chianti_H_He_latest.h5
+  atom_data: kurucz_cd23_chianti_H_He_latest
