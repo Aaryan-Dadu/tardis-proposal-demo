@@ -38,8 +38,8 @@ def load_manifest_rows(manifest_path: Path) -> list[dict]:
 
 def run_papermill_for_config(
     config_path: Path,
-    setup_yaml: Path,
     env_name: str,
+    atom_data: str,
     output_dir: Path,
     template_path: Path,
 ) -> bool:
@@ -59,8 +59,9 @@ def run_papermill_for_config(
         "-n", env_name,
         "papermill",
         "--log-level", "INFO",
-        "-p", "setup_yaml_path", str(setup_yaml),
-        "-p", "config_file_path", str(config_path),
+        "-k", "python3",
+        "-p", "config_path", str(config_path),
+        "-p", "atom_data", atom_data,
         str(template_path),
         str(output_nb),
     ]
@@ -183,6 +184,7 @@ def main() -> int:
             continue
 
         env_name = env_name_for_config(config_path)
+        atom_data = str(entry.get("atom_data") or setup_data.get("config", {}).get("atom_data") or "kurucz_cd23_chianti_H_He_latest")
         logger.info(f"Preparing environment for {config_path.name}: {env_name}")
         if not ensure_conda_env(setup_yaml_path, env_name):
             logger.error(f"✗ Environment setup failed for {setup_yaml_path}")
@@ -192,8 +194,8 @@ def main() -> int:
         # Run papermill for this config
         success = run_papermill_for_config(
             config_path=config_path,
-            setup_yaml=setup_yaml_path,
             env_name=env_name,
+            atom_data=atom_data,
             output_dir=output_dir,
             template_path=template_path,
         )
