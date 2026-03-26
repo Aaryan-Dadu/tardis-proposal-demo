@@ -48,33 +48,42 @@ jobs:
             --head-ref "${{ steps.diffrefs.outputs.head_ref }}" \
             --output generated/changed-configs.json
 
+      - name: Check if config changes exist
+        id: configcheck
+        run: |
+          count="$(jq -r '.count // 0' generated/changed-configs.json)"
+          if [[ "$count" -gt 0 ]]; then
+            echo "has_configs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_configs=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Changed configs: $count"
+
       - name: Generate per-config setup.yaml
+        if: steps.configcheck.outputs.has_configs == 'true'
         run: python scripts/generate_setup_yamls.py
 
       - name: Commit and push generated setup.yaml files
-        if: success()
+        if: success() && steps.configcheck.outputs.has_configs == 'true'
         run: |
           set +e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python - <<'PY'
-          import json
-          from pathlib import Path
+          mkdir -p generated
+          if [[ -f generated/setup-generation-manifest.json ]]; then
+            jq -r '.[] | .setup_yaml // empty' generated/setup-generation-manifest.json \
+              | sed '/^$/d' \
+              | sort -u > generated/setup-yaml-paths.txt
+          else
+            : > generated/setup-yaml-paths.txt
+          fi
 
-          manifest = Path("generated/setup-generation-manifest.json")
-          selected: list[str] = []
-          if manifest.exists():
-              rows = json.loads(manifest.read_text(encoding="utf-8"))
-              for row in rows:
-                  path = row.get("setup_yaml") if isinstance(row, dict) else None
-                  if isinstance(path, str) and path.strip() and Path(path).exists():
-                      selected.append(path)
-
-          out = Path("generated/setup-yaml-paths.txt")
-          out.parent.mkdir(parents=True, exist_ok=True)
-          out.write_text("\n".join(sorted(set(selected))) + "\n", encoding="utf-8")
-          print(f"setup_yaml candidates: {len(set(selected))}")
-          PY
+          if [[ -s generated/setup-yaml-paths.txt ]]; then
+            existing_count="$(while IFS= read -r path; do [[ -f "$path" ]] && echo "$path"; done < generated/setup-yaml-paths.txt | wc -l)"
+          else
+            existing_count=0
+          fi
+          echo "setup_yaml candidates: $existing_count"
 
           if [[ ! -s generated/setup-yaml-paths.txt ]]; then
             echo "No setup.yaml paths found in manifest."
@@ -83,6 +92,7 @@ jobs:
 
           while IFS= read -r path; do
             [[ -n "$path" ]] || continue
+            [[ -f "$path" ]] || continue
             git add -- "$path"
           done < generated/setup-yaml-paths.txt
 
@@ -105,15 +115,17 @@ jobs:
           fi
 
       - name: Run full notebook generation for all changed configs
+        if: steps.configcheck.outputs.has_configs == 'true'
         run: python scripts/run_full_notebook_generation.py
 
       - name: Build gallery from generated notebooks
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && steps.configcheck.outputs.has_configs == 'true'
         run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
 
       - name: Commit and push generated notebooks
-        if: success()
+        if: success() && steps.configcheck.outputs.has_configs == 'true'
         run: |
+          set +e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add out
@@ -122,11 +134,26 @@ jobs:
             exit 0
           fi
           git commit -m "Update generated notebooks (dev-only-ci) [skip ci]"
+          commit_rc=$?
+          if [[ $commit_rc -ne 0 ]]; then
+            echo "Notebook commit skipped/failed (rc=$commit_rc), continuing CI."
+            exit 0
+          fi
+
           git push
+          push_rc=$?
+          if [[ $push_rc -ne 0 ]]; then
+            echo "Notebook push failed (rc=$push_rc), continuing CI."
+            exit 0
+          fi
 
       - name: Gallery deployment skipped on dev-only-ci
-        if: success()
+        if: success() && steps.configcheck.outputs.has_configs == 'true'
         run: echo "Gallery build/deploy is main-branch-only."
+
+      - name: No config change skip notice
+        if: steps.configcheck.outputs.has_configs != 'true'
+        run: echo "No config changes detected. Skipping setup and notebook generation."
 
       - name: Upload CI artifacts
         if: always()
