@@ -1,4 +1,4 @@
-name: dev-only-ci-direct-execution
+name: tardis-proposal-prototype-dev-only-ci
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
       - name: Set up conda environment
         uses: conda-incubator/setup-miniconda@v3
         with:
-          activate-environment: tardis-gsoc-approach-4-ci
+          activate-environment: tardis-proposal-prototype-ci
           environment-file: envs/ci-environment.yml
           auto-activate-base: false
 

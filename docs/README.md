@@ -1,24 +1,17 @@
-# 📚 Documentation Index
-
-Welcome! This folder contains the full project documentation set.
+# Documentation Index
 
 ## Start here
 
-1. **Main design doc** → [DESIGN.md](DESIGN.md)
-2. **Architecture deep dive** → [ARCHITECTURE.md](ARCHITECTURE.md)
-3. **User how-to guide** → [USER_GUIDE.md](USER_GUIDE.md)
+- [DESIGN.md](DESIGN.md): design choices and scope
+- [ARCHITECTURE.md](ARCHITECTURE.md): flow and system view
 
-## Operational docs
+## Run and operate
 
-- [SERVER_SETUP.md](SERVER_SETUP.md)
-- [ENVIRONMENTS.md](ENVIRONMENTS.md)
-- [SECRETS.md](SECRETS.md)
+- [USER_GUIDE.md](USER_GUIDE.md): how to trigger and verify runs
+- [SERVER_SETUP.md](SERVER_SETUP.md): server mode setup
+- [SECRETS.md](SECRETS.md): required secrets and usage
+- [ENVIRONMENTS.md](ENVIRONMENTS.md): environment details
 
-## Reference docs
+## Reference
 
-- [FILE_PURPOSES.md](FILE_PURPOSES.md)
-
-## Diagram map
-
-- End-to-end flow: `DESIGN.md`
-- Component and sequence diagrams: `ARCHITECTURE.md`
+- [FILE_PURPOSES.md](FILE_PURPOSES.md): file and folder purpose map

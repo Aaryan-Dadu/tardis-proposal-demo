@@ -1,44 +1,30 @@
-# 🗂️ File Purpose Map
+# File Purpose Map
 
-## Top-level
+## Top level
 
-- `README.md` — Project overview and doc entrypoint
-- `LICENSE` — Licensing terms
-- `.gitignore` — Ignore policy for generated vs tracked assets
+- `README.md`: project overview
+- `proposal.md`: GSoC proposal text
+- `setups/`: input config files
+- `templates/`: notebook template
+- `docs/`: technical docs
+- `docs-site/`: static gallery output
 
-## Workflows
+## Workflow files
 
-- `.github/workflows/prototype-approach-4.yml`
-  - Main CI pipeline (detect, sanity, dispatch, sync-back, commit)
-- `.github/workflows/deploy-gallery.yml`
-  - Manual Pages deployment workflow
-- `.github/workflows/static.yml`
-  - Static Pages deployment workflow
+- `.github/workflows/prototype-approach-4.yml`: main server workflow for TARDIS Proposal Prototype
+- `.github/workflows/dev-only-ci.yml`: CI-only notebook generation workflow
+- `.github/workflows/static.yml`: static pages deployment
 
-## Scripts (`scripts/`)
+## Scripts
 
-- `detect_changed_configs.py` — Find changed setup configs in git diff
-- `generate_setup_yamls.py` — Generate per-config `setup.yaml`
-- `create_sanity_configs.py` — Prepare reduced CI sanity configs
-- `run_setup_yaml_sanity.py` — Install from setup and run sanity checks
-- `create_server_queue.py` — Build server queue payload
-- `build_gallery.py` — Build `docs-site` + rendered notebook previews
+- `scripts/detect_changed_configs.py`: detect changed setup files
+- `scripts/generate_setup_yamls.py`: generate setup metadata per config
+- `scripts/run_full_notebook_generation.py`: run full notebook generation in CI-only mode
+- `scripts/build_gallery.py`: generate static gallery pages
 
-## Server (`server/`)
+## Server scripts
 
-- `run_on_azure_example.sh` — Server orchestrator entrypoint
-- `process_server_queue.py` — Queue consumer + manifest writer
-- `setup_env_from_setup_yaml.py` — Per-config env setup and TARDIS install
-- `run_notebook_for_config.py` — Execute notebook via papermill
-
-## Data/Artifacts
-
-- `generated/` — Intermediate CI JSON artifacts
-- `out/` — Generated notebooks and manifest
-- `docs-site/` — Static gallery site for Pages
-- `templates/config_report_template.ipynb` — Papermill notebook template
-
-## Config Inputs
-
-- `setups/**` — TARDIS configs and per-config setup metadata
-- `envs/*.yml` — CI/server control environment specs
+- `server/run_on_azure_example.sh`: server entry script
+- `server/process_server_queue.py`: queue processor
+- `server/setup_env_from_setup_yaml.py`: environment setup from setup metadata
+- `server/run_notebook_for_config.py`: notebook execution helper

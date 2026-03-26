@@ -1,36 +1,29 @@
-# 🧪 Environment Details
+# Environment Details
 
-## CI environment
+## CI control environment
 
 Defined in `envs/ci-environment.yml`.
 
-Purpose:
-- run detection/generation scripts
-- run sanity checks
-- dispatch queue and sync outputs
+Used for:
 
-Key points:
-- Python 3.13 aligned with TARDIS requirement
-- lightweight orchestration dependencies
+- change detection
+- setup metadata generation
+- orchestration scripts
 
 ## Server control environment
 
-Created by `server/run_on_azure_example.sh`.
+Defined in `envs/server-environment.yml`.
 
-Purpose:
-- run server orchestration scripts
-- build gallery (`nbconvert`, `nbformat`)
+Used for:
 
-## Per-config execution environments
+- queue processing
+- gallery build
 
-Created by `server/setup_env_from_setup_yaml.py` using per-config `setup.yaml`:
-- lockfile-based conda package resolution
-- TARDIS install from requested git ref
-- extra runtime packages ensured
+## Per-config execution environment
 
-Environment naming:
-- sanitized from config/setup path (e.g., `a4-setups-2026-...`)
+Created from generated `setup.yaml`.
 
-Lifecycle:
-- created per queue item
-- cleaned after run (to prevent disk growth)
+Contains:
+
+- pinned TARDIS version or requested ref
+- runtime tools like `papermill`, `nbconvert`, `pyyaml`, `matplotlib`

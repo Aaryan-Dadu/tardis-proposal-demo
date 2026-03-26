@@ -1,48 +1,26 @@
-# 👩‍💻 User Guide (How to Use)
+# User Guide
 
-## 1) Trigger a run
+## Trigger a run
 
-Choose one:
-- Push config changes under `setups/` to `main`
-- Run `approach-4-incremental-config-pipeline` manually from Actions
+1. Add or edit a setup config in `setups/`
+2. Push to the branch (`main` or `dev-only-ci`)
+3. Check workflow run in GitHub Actions
 
-## 2) What happens automatically
+## What happens automatically
 
-- Changed configs are detected
-- `setup.yaml` is generated per config
-- CI sanity runs execute reduced validation
-- Valid configs are queued for server execution
-- Server runs full notebook generation
-- CI pulls generated notebooks/gallery and commits them
+1. Changed configs are detected
+2. `setup.yaml` is generated per changed config
+3. Notebook generation runs by branch (`main` server based, `dev-only-ci` CI runner only)
+4. Gallery pages are built
 
-## 3) Where to check results
+## Where to check output
 
-- Execution status: GitHub Actions run logs
-- Notebook status details: `out/notebook-manifest.json`
-- Generated notebook files: `out/.../*.ipynb`
-- Rendered gallery: `docs-site/index.html`
+- Notebook outputs: `out/`
+- Notebook manifest: `out/notebook-manifest.json`
+- Static gallery: `docs-site/`
 
-## 4) Interpreting failures
+## Common failures
 
-Read each manifest row:
-- `status`: `ok` or `failed`
-- `reason`: setup or notebook execution failure type
-- `stderr_tail`: last traceback chunk for debugging
-
-## 5) Local gallery build
-
-From repo root:
-
-```bash
-python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
-```
-
-## 6) Local preview
-
-Open `docs-site/index.html` in browser (or use a local static server).
-
-## 7) Common pitfalls
-
-- Running scripts from the wrong directory (use repo root)
-- Missing secrets blocks dispatch
-- Stale server checkout (handled by startup restore+pull)
+- Missing atom data: dataset is resolved by name or downloaded
+- Invalid config: check workflow logs for exact TARDIS error
+- Empty change set: no notebook generation is expected

@@ -3,7 +3,7 @@ name: Deploy static content to Pages
 
 on:
   workflow_run:
-    workflows: ["approach-4-incremental-config-pipeline"]
+    workflows: ["tardis-proposal-prototype-incremental-pipeline"]
     branches: ["main"]
     types: [completed]
 
