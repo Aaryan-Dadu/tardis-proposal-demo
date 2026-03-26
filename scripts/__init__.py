@@ -1,1 +1,1 @@
-"""Helper scripts for approach-4 prototype."""
+"""Helper scripts for TARDIS Proposal Prototype."""

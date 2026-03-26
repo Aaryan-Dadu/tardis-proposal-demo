@@ -1,4 +1,4 @@
-# TARDIS GSoC Approach-4 Server Control Environment
+# TARDIS Proposal Prototype Server Control Environment
 # This is the management/orchestration environment for the Azure server.
 # Per-config TARDIS simulation environments are created separately from tardisbase lockfiles
 # using setup_env_from_setup_yaml.py. This environment runs the orchestration scripts:
@@ -7,7 +7,7 @@
 # - Generate output gallery
 # For installation.rst alignment, the per-config environments follow the lockfile-first approach.
 
-name: tardis-gsoc-approach-4-server
+name: tardis-proposal-prototype-server
 channels:
   - conda-forge
 dependencies:

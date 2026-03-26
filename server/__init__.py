@@ -1,1 +1,1 @@
-"""Server-side helpers for approach-4 prototype."""
+"""Server-side helpers for TARDIS Proposal Prototype."""

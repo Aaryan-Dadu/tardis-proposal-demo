@@ -1,42 +1,32 @@
-# 🖥️ Server Setup Guide (Azure VM)
+# Server Setup Guide
+
+Use this only if running server-dispatch mode from `main` workflow.
 
 ## Prerequisites
 
-- Linux VM with SSH access
-- Miniconda installed (default path expected: `~/miniconda3/bin/conda`)
-- Git installed
-- Repo cloned on server
-- Access to private repo via deploy key (if private)
+- Linux VM with conda installed
+- SSH access from GitHub Actions
+- Repository cloned on server
 
-## Required environment variables (optional overrides)
+## Required secrets
 
-- `REPO_ROOT`
-- `QUEUE_PATH`
-- `OUT_ROOT`
-- `CONDA_BIN`
-- `CONTROL_ENV_NAME`
+- `AZURE_SERVER_HOST`
+- `AZURE_SERVER_USER`
+- `AZURE_SSH_PRIVATE_KEY`
+- `AZURE_SERVER_REPO_PATH`
 
-## Runner behavior
+## Server run command
 
-`server/run_on_azure_example.sh` now does:
-1. `git restore .`
-2. `git pull --ff-only origin <current_branch>`
-3. recreates control env
-4. processes queue
-5. builds gallery
-
-This ensures server state is fresh and up-to-date before every run.
-
-## Manual execution
+From workflow, server entrypoint is:
 
 ```bash
-cd ~/tardis-proposal-demo
 bash server/run_on_azure_example.sh
 ```
 
-## Debug checklist
+## What server script does
 
-- Queue exists: `generated/server-queue.json`
-- Conda path valid
-- Notebook manifest produced: `out/notebook-manifest.json`
-- Gallery built: `docs-site/index.html`
+1. Syncs repository to target ref
+2. Reads queue from `generated/server-queue.json`
+3. Sets up per-config environments
+4. Runs notebook generation
+5. Builds gallery artifacts

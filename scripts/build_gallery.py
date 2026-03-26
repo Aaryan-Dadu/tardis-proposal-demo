@@ -16,7 +16,7 @@ HTML_TEMPLATE = """<!doctype html>
 <head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-  <title>TARDIS Approach-4 Notebook Gallery</title>
+  <title>TARDIS Proposal Prototype Notebook Gallery</title>
   <style>
     :root {{
       --page-bg: #f5f8ff;
@@ -314,7 +314,7 @@ HTML_TEMPLATE = """<!doctype html>
 <body>
   <div class=\"container\">
     <section class=\"hero\">
-      <h1>TARDIS Approach-4 Notebook Gallery</h1>
+      <h1>TARDIS Proposal Prototype Notebook Gallery</h1>
       <p class=\"subtitle\">Rendered notebook outputs with quick in-page preview and full notebook navigation.</p>
       <div class=\"summary\">{summary}</div>
       <div class=\"overview\">

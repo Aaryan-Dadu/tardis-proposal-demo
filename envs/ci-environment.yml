@@ -1,9 +1,9 @@
-# TARDIS GSoC Approach-4 CI Environment
+# TARDIS Proposal Prototype CI Environment
 # Lightweight environment for orchestrating config detection, setup.yaml generation,
 # and sanity checks on GitHub Actions.
 # Per-config environments are created separately from tardisbase lockfiles.
 
-name: tardis-gsoc-approach-4-ci
+name: tardis-proposal-prototype-ci
 channels:
   - conda-forge
 dependencies:

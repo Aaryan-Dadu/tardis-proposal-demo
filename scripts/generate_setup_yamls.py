@@ -84,7 +84,7 @@ def extract_atom_data(config_path: Path) -> str:
 
 def create_setup_yaml(config_path: Path, tardis_spec: str, atom_data: str) -> Path:
     setup = {
-        "setup_format_version": "approach-4-v1",
+        "setup_format_version": "proposal-prototype-v1",
         "environment": {
             "name": "tardis-config-env",
             "lockfile_url": DEFAULT_LOCKFILE_URL,
