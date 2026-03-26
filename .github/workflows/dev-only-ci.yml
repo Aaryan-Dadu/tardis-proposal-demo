@@ -108,20 +108,25 @@ jobs:
         run: python scripts/run_full_notebook_generation.py
 
       - name: Build gallery from generated notebooks
+        if: github.ref == 'refs/heads/main'
         run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
 
-      - name: Commit and push generated notebooks and gallery
+      - name: Commit and push generated notebooks
         if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add out docs-site
+          git add out
           if git diff --cached --quiet; then
             echo "No generated output changes to commit."
             exit 0
           fi
-          git commit -m "Update generated notebooks and gallery (dev-only-ci) [skip ci]"
+          git commit -m "Update generated notebooks (dev-only-ci) [skip ci]"
           git push
+
+      - name: Gallery deployment skipped on dev-only-ci
+        if: success()
+        run: echo "Gallery build/deploy is main-branch-only."
 
       - name: Upload CI artifacts
         if: always()
@@ -132,4 +137,3 @@ jobs:
             generated/changed-configs.json
             generated/setup-generation-manifest.json
             out/
-            docs-site/
