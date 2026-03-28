@@ -5,6 +5,8 @@ import json
 import subprocess
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+
 def env_name_for_config(config_path: Path) -> str:
     raw = str(config_path.with_suffix("")).replace("/", "-").replace("_", "-")
     return f"a4-{raw}"[:80]
@@ -25,10 +27,11 @@ def accept_conda_tos() -> None:
 
 
 def ensure_conda_env(setup_yaml: Path, env_name: str) -> None:
+    setup_helper = ROOT / "scripts" / "setup_env_from_setup_yaml.py"
     result = subprocess.run(
         [
             "python",
-            "server/setup_env_from_setup_yaml.py",
+            str(setup_helper),
             "--setup-yaml",
             str(setup_yaml),
             "--env-name",
