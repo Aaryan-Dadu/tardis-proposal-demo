@@ -95,6 +95,7 @@ def generate_plots_from_config(
             atom_data=resolved_atom,
             virtual_packet_logging=True,
             show_convergence_plots=show_convergence,
+            show_progress_bars= not sanity_only,
         )
     except RuntimeError as exc:
         if "Convergence Plots cannot be displayed in command-line" not in str(exc):
@@ -104,6 +105,7 @@ def generate_plots_from_config(
             atom_data=resolved_atom,
             virtual_packet_logging=True,
             show_convergence_plots=False,
+            show_progress_bars=False,
         )
     if sanity_only:
         return []
