@@ -129,9 +129,11 @@ jobs:
         if: steps.configcheck.outputs.has_configs == 'true'
         run: python scripts/run_full_notebook_generation.py
 
-      - name: Build gallery from generated notebooks
+      - name: Install gallery dependencies
         if: steps.configcheck.outputs.has_configs == 'true'
         run: python -m pip install --upgrade nbformat nbconvert
+
+      - name: Build gallery from generated notebooks
         if: steps.configcheck.outputs.has_configs == 'true'
         run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
 
