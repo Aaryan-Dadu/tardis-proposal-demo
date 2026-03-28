@@ -1,11 +1,11 @@
-name: tardis-proposal-prototype-dev-only-ci
+name: tardis-proposal-prototype-incremental-pipeline
 
 on:
   workflow_dispatch:
   pull_request:
   push:
     branches:
-      - dev-only-ci
+      - main
 
 defaults:
   run:
@@ -15,7 +15,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: dev-only-ci-${{ github.ref }}
+  group: main-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -70,7 +70,7 @@ jobs:
         run: python scripts/generate_setup_yamls.py
 
       - name: Commit and push generated setup.yaml files
-        if: success() && github.ref == 'refs/heads/dev-only-ci' && github.event_name != 'pull_request' && steps.configcheck.outputs.has_configs == 'true'
+        if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && steps.configcheck.outputs.has_configs == 'true'
         run: |
           set +e
           git config user.name "github-actions[bot]"
@@ -156,7 +156,7 @@ jobs:
         run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
 
       - name: Commit and push generated notebooks and gallery
-        if: success() && github.ref == 'refs/heads/dev-only-ci' && github.event_name != 'pull_request' && steps.configcheck.outputs.has_configs == 'true'
+        if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && steps.configcheck.outputs.has_configs == 'true'
         run: |
           set +e
           git config user.name "github-actions[bot]"
@@ -166,7 +166,7 @@ jobs:
             echo "No generated output changes to commit."
             exit 0
           fi
-          git commit -m "Update generated notebooks and gallery (dev-only-ci) [skip ci]"
+          git commit -m "Update generated notebooks and gallery [skip ci]"
           commit_rc=$?
           if [[ $commit_rc -ne 0 ]]; then
             echo "Generated output commit skipped/failed (rc=$commit_rc), continuing CI."
@@ -202,7 +202,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dev-only-ci-artifacts
+          name: main-ci-artifacts
           path: |
             out/
             docs-site/

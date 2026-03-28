@@ -3,8 +3,8 @@ name: Deploy static content to Pages
 
 on:
   workflow_run:
-    workflows: ["tardis-proposal-prototype-dev-only-ci"]
-    branches: ["dev-only-ci"]
+    workflows: ["tardis-proposal-prototype-incremental-pipeline"]
+    branches: ["main"]
     types: [completed]
 
   # Allows you to run this workflow manually from the Actions tab
@@ -34,7 +34,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: dev-only-ci
+          ref: main
           fetch-depth: 0
 
       - name: Set up Python
