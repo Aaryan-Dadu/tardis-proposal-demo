@@ -8,16 +8,15 @@ Used for:
 
 - change detection
 - setup metadata generation
-- orchestration scripts
+- sanity execution orchestration
+- notebook generation orchestration
+- gallery build orchestration
 
-## Server control environment
+## Optional server environment
 
 Defined in `envs/server-environment.yml`.
 
-Used for:
-
-- queue processing
-- gallery build
+Present for optional/legacy server-side experiments; not required for the main CI workflow.
 
 ## Per-config execution environment
 

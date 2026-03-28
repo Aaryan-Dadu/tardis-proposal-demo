@@ -2,13 +2,13 @@
 
 ## Goal
 
-Make `tardis-setups` easier to explore by auto-generating notebooks and publishing a browsable gallery, while preserving reproducibility.
+Make `tardis-setups` easier to explore by auto-generating notebooks and publishing a browsable gallery, while preserving reproducibility from configuration files present in it.
 
 ## Core design points
 
 - Keep config source unchanged
 - Generate setup metadata per config
-- Keep two branch based ways: server based on `main`, CI runner only on `dev-only-ci`
+- Use a single main-branch CI execution path for config compatibility testing, notebook generation, and gallery build
 - Keep gallery static and easy to host on GitHub Pages
 - Keep runs observable through JSON manifests
 
@@ -23,13 +23,8 @@ flowchart TD
     E --> F[Publish]
 ```
 
-## Non goals
-
-- No mandatory live backend for notebook viewing
-- No rewriting of historical config content
-
 ## Why this works
 
-- Researchers only submit config changes
+- Researchers only submit configs, or make changes to it
 - Pipeline handles environment and execution details
 - New users get direct visual outputs without manual setup loops

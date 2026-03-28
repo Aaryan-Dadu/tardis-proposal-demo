@@ -8,8 +8,6 @@
 ## Run and operate
 
 - [USER_GUIDE.md](USER_GUIDE.md): how to trigger and verify runs
-- [SERVER_SETUP.md](SERVER_SETUP.md): server mode setup
-- [SECRETS.md](SECRETS.md): required secrets and usage
 - [ENVIRONMENTS.md](ENVIRONMENTS.md): environment details
 
 ## Reference
