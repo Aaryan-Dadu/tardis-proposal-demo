@@ -127,7 +127,7 @@ jobs:
 
       - name: Run full notebook generation for all changed configs
         if: steps.configcheck.outputs.has_configs == 'true'
-        run: python scripts/run_full_notebook_generation.py
+        run: python scripts/run_full_notebook_generation.py --skip-env-setup
 
       - name: Install gallery dependencies
         if: steps.configcheck.outputs.has_configs == 'true'

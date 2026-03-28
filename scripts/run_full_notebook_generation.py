@@ -5,6 +5,7 @@ Executes directly in CI without server dispatch (dev-only-ci workflow).
 """
 
 import json
+import argparse
 import logging
 import os
 import subprocess
@@ -169,6 +170,14 @@ def create_notebook_manifest(output_dir: Path) -> None:
 
 def main() -> int:
     """Main entry point."""
+    parser = argparse.ArgumentParser(description="Run full notebook generation for changed configs.")
+    parser.add_argument(
+        "--skip-env-setup",
+        action="store_true",
+        help="Reuse existing conda environments instead of recreating from setup.yaml.",
+    )
+    args = parser.parse_args()
+
     project_root = Path.cwd().resolve()
     generated_dir = project_root / "generated"
     output_dir = project_root / "out"
@@ -221,11 +230,14 @@ def main() -> int:
         atom_data = normalize_atom_data(
             str(entry.get("atom_data") or setup_data.get("config", {}).get("atom_data") or "kurucz_cd23_chianti_H_He_latest")
         )
-        logger.info(f"Preparing environment for {resolved_config_path.name}: {env_name}")
-        if not ensure_conda_env(setup_yaml_path, env_name):
-            logger.error(f"✗ Environment setup failed for {setup_yaml_path}")
-            failed += 1
-            continue
+        if args.skip_env_setup:
+            logger.info(f"Reusing existing environment for {resolved_config_path.name}: {env_name}")
+        else:
+            logger.info(f"Preparing environment for {resolved_config_path.name}: {env_name}")
+            if not ensure_conda_env(setup_yaml_path, env_name):
+                logger.error(f"✗ Environment setup failed for {setup_yaml_path}")
+                failed += 1
+                continue
         
         # Run papermill for this config
         success = run_papermill_for_config(
