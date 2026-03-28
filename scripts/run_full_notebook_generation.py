@@ -111,7 +111,7 @@ def load_setup_yaml(path: Path) -> dict:
 def ensure_conda_env(setup_yaml: Path, env_name: str) -> bool:
     cmd = [
         "python",
-        "server/setup_env_from_setup_yaml.py",
+        "scripts/setup_env_from_setup_yaml.py",
         "--setup-yaml",
         str(setup_yaml),
         "--env-name",

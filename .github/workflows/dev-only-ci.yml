@@ -125,39 +125,6 @@ jobs:
         if: steps.configcheck.outputs.has_configs == 'true'
         run: python scripts/run_setup_yaml_sanity.py
 
-      - name: Run full notebook generation for all changed configs
-        if: steps.configcheck.outputs.has_configs == 'true'
-        run: python scripts/run_full_notebook_generation.py
-
-      - name: Build gallery from generated notebooks
-        if: github.ref == 'refs/heads/dev-only-ci' && steps.configcheck.outputs.has_configs == 'true'
-        run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
-
-      - name: Commit and push generated notebooks
-        if: success() && steps.configcheck.outputs.has_configs == 'true'
-        run: |
-          set +e
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add out
-          if git diff --cached --quiet; then
-            echo "No generated output changes to commit."
-            exit 0
-          fi
-          git commit -m "Update generated notebooks (dev-only-ci) [skip ci]"
-          commit_rc=$?
-          if [[ $commit_rc -ne 0 ]]; then
-            echo "Notebook commit skipped/failed (rc=$commit_rc), continuing CI."
-            exit 0
-          fi
-
-          git push
-          push_rc=$?
-          if [[ $push_rc -ne 0 ]]; then
-            echo "Notebook push failed (rc=$push_rc), continuing CI."
-            exit 0
-          fi
-
       - name: No config change skip notice
         if: steps.configcheck.outputs.has_configs != 'true'
         run: echo "No config changes detected. Skipping setup and notebook generation."
@@ -170,29 +137,5 @@ jobs:
           path: |
             generated/changed-configs.json
             generated/setup-generation-manifest.json
-            out/
-
-  pages-preview:
-    needs: ci-direct-execution
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: Install gallery rendering dependencies
-        run: python -m pip install --upgrade nbformat nbconvert
-
-      - name: Build basic gallery page
-        run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
-
-      - name: Upload pages preview artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: proposal-prototype-pages-preview
-          path: docs-site/
+            generated/sanity-manifest.json
+            generated/sanity-results.json
