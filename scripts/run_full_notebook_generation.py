@@ -45,11 +45,15 @@ def run_papermill_for_config(
     template_path: Path,
 ) -> bool:
     """Execute notebook with papermill for a single config."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Derive notebook name from config
-    config_stem = config_path.stem
-    output_nb = output_dir / f"{config_stem}.ipynb"
+    project_root = Path.cwd()
+
+    # Make output mirror the config's folder structure
+    relative_config_dir = config_path.parent.relative_to(project_root)
+    mirrored_output_dir = output_dir / relative_config_dir
+
+    mirrored_output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_nb = mirrored_output_dir / f"{config_path.stem}.ipynb"
     
     logger.info(f"Generating notebook for {config_path.name}")
     logger.info(f"  Output: {output_nb}")
