@@ -66,12 +66,29 @@ jobs:
         run: python scripts/generate_setup_yamls.py
 
       - name: Commit and push generated setup.yaml files
-        if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        if: success() && github.ref == 'refs/heads/dev-only-ci' && github.event_name != 'pull_request' && steps.configcheck.outputs.has_configs == 'true'
         run: |
           set +e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python scripts/read_manifest.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = Path("generated/setup-generation-manifest.json")
+          selected: list[str] = []
+          if manifest.exists():
+              rows = json.loads(manifest.read_text(encoding="utf-8"))
+              for row in rows:
+                  path = row.get("setup_yaml") if isinstance(row, dict) else None
+                  if isinstance(path, str) and path.strip() and Path(path).exists():
+                      selected.append(path)
+
+          out = Path("generated/setup-yaml-paths.txt")
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text("\n".join(sorted(set(selected))) + "\n", encoding="utf-8")
+          print(f"setup_yaml candidates: {len(set(selected))}")
+          PY
 
           if [[ ! -s generated/setup-yaml-paths.txt ]]; then
             echo "No setup.yaml paths found in manifest."
@@ -101,9 +118,11 @@ jobs:
             exit 0
           fi
       - name: Create reduced configs for CI sanity run
+        if: steps.configcheck.outputs.has_configs == 'true'
         run: python scripts/create_sanity_configs.py
 
       - name: Install from setup.yaml and run reduced sanity configs
+        if: steps.configcheck.outputs.has_configs == 'true'
         run: python scripts/run_setup_yaml_sanity.py
 
       - name: Run full notebook generation for all changed configs
