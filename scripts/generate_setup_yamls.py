@@ -87,6 +87,21 @@ def extract_atom_data(config_path: Path) -> str:
 
 
 def create_setup_yaml(config_path: Path, tardis_spec: str, atom_data: str) -> Path:
+    inferred_request = infer_tardis_request(config_path)
+    setup_path = config_path.parent / "setup.yaml"
+    requested_ref = inferred_request
+
+    if inferred_request == DEFAULT_TARDIS_REQUEST and setup_path.exists():
+        try:
+            existing = yaml.safe_load(setup_path.read_text(encoding="utf-8")) or {}
+        except Exception:  # noqa: BLE001
+            existing = {}
+
+        if isinstance(existing, dict):
+            existing_ref = existing.get("tardis", {}).get("requested_ref")
+            if isinstance(existing_ref, str) and existing_ref.strip():
+                requested_ref = existing_ref.strip()
+
     setup = {
         "setup_format_version": "proposal-prototype-v1",
         "environment": {
@@ -105,7 +120,7 @@ def create_setup_yaml(config_path: Path, tardis_spec: str, atom_data: str) -> Pa
         "tardis": {
             "install_source": "pip-git",
             "repo_url": "https://github.com/tardis-sn/tardis.git",
-            "requested_ref": infer_tardis_request(config_path),
+            "requested_ref": requested_ref,
             "conda_spec": tardis_spec,
         },
         "config": {
@@ -113,7 +128,6 @@ def create_setup_yaml(config_path: Path, tardis_spec: str, atom_data: str) -> Pa
             "atom_data": atom_data,
         },
     }
-    setup_path = config_path.parent / "setup.yaml"
     setup_path.write_text(yaml.safe_dump(setup, sort_keys=False), encoding="utf-8")
     return setup_path
 

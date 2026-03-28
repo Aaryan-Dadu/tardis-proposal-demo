@@ -14,7 +14,7 @@ environment:
 tardis:
   install_source: pip-git
   repo_url: https://github.com/tardis-sn/tardis.git
-  requested_ref: release-latest
+  requested_ref: 0d099a3fcabd6cf797d6c99bb809e0a7ad138ff8
   conda_spec: tardis-sn
 config:
   path: setups/1987/Old_1987_Paper/old_example.yml
