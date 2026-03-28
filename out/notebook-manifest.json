@@ -1,5 +1,9 @@
 [
   {
+    "notebook_path": "out/setups/1987/Old_1987_Paper/old_example.ipynb",
+    "config_name": "old_example"
+  },
+  {
     "notebook_path": "out/setups/2026/GSOC_2026_Paper/tardis_example.ipynb",
     "config_name": "tardis_example"
   },
