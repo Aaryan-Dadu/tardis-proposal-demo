@@ -14,6 +14,10 @@ defaults:
 permissions:
   contents: write
 
+concurrency:
+  group: dev-only-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci-direct-execution:
     runs-on: ubuntu-latest
@@ -111,10 +115,24 @@ jobs:
             exit 0
           fi
 
-          git push
-          push_rc=$?
-          if [[ $push_rc -ne 0 ]]; then
-            echo "setup.yaml push failed (rc=$push_rc), continuing CI."
+          branch_name="${GITHUB_REF#refs/heads/}"
+          pushed="false"
+          for attempt in 1 2 3; do
+            if git push; then
+              pushed="true"
+              break
+            fi
+            echo "setup.yaml push failed on attempt $attempt, rebasing on origin/$branch_name and retrying..."
+            git fetch origin "$branch_name"
+            if ! git rebase "origin/$branch_name"; then
+              echo "setup.yaml rebase failed; aborting rebase and continuing CI."
+              git rebase --abort || true
+              break
+            fi
+          done
+
+          if [[ "$pushed" != "true" ]]; then
+            echo "setup.yaml push failed after retries, continuing CI."
             exit 0
           fi
       - name: Create reduced configs for CI sanity run
@@ -155,10 +173,24 @@ jobs:
             exit 0
           fi
 
-          git push
-          push_rc=$?
-          if [[ $push_rc -ne 0 ]]; then
-            echo "Generated output push failed (rc=$push_rc), continuing CI."
+          branch_name="${GITHUB_REF#refs/heads/}"
+          pushed="false"
+          for attempt in 1 2 3; do
+            if git push; then
+              pushed="true"
+              break
+            fi
+            echo "Generated output push failed on attempt $attempt, rebasing on origin/$branch_name and retrying..."
+            git fetch origin "$branch_name"
+            if ! git rebase "origin/$branch_name"; then
+              echo "Generated output rebase failed; aborting rebase and continuing CI."
+              git rebase --abort || true
+              break
+            fi
+          done
+
+          if [[ "$pushed" != "true" ]]; then
+            echo "Generated output push failed after retries, continuing CI."
             exit 0
           fi
 
