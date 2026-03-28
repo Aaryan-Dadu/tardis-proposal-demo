@@ -125,6 +125,39 @@ jobs:
         if: steps.configcheck.outputs.has_configs == 'true'
         run: python scripts/run_setup_yaml_sanity.py
 
+      - name: Run full notebook generation for all changed configs
+        if: steps.configcheck.outputs.has_configs == 'true'
+        run: python scripts/run_full_notebook_generation.py
+
+      - name: Build gallery from generated notebooks
+        if: steps.configcheck.outputs.has_configs == 'true'
+        run: python scripts/build_gallery.py --manifest out/notebook-manifest.json --output-dir docs-site
+
+      - name: Commit and push generated notebooks and gallery
+        if: success() && github.ref == 'refs/heads/dev-only-ci' && github.event_name != 'pull_request' && steps.configcheck.outputs.has_configs == 'true'
+        run: |
+          set +e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add out docs-site
+          if git diff --cached --quiet; then
+            echo "No generated output changes to commit."
+            exit 0
+          fi
+          git commit -m "Update generated notebooks and gallery (dev-only-ci) [skip ci]"
+          commit_rc=$?
+          if [[ $commit_rc -ne 0 ]]; then
+            echo "Generated output commit skipped/failed (rc=$commit_rc), continuing CI."
+            exit 0
+          fi
+
+          git push
+          push_rc=$?
+          if [[ $push_rc -ne 0 ]]; then
+            echo "Generated output push failed (rc=$push_rc), continuing CI."
+            exit 0
+          fi
+
       - name: No config change skip notice
         if: steps.configcheck.outputs.has_configs != 'true'
         run: echo "No config changes detected. Skipping setup and notebook generation."
@@ -135,7 +168,5 @@ jobs:
         with:
           name: dev-only-ci-artifacts
           path: |
-            generated/changed-configs.json
-            generated/setup-generation-manifest.json
-            generated/sanity-manifest.json
-            generated/sanity-results.json
+            out/
+            docs-site/
