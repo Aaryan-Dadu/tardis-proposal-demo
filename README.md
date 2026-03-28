@@ -34,6 +34,12 @@ Thank you for reviewing my GSoC proposal prototype. This repository shows the im
 3. Open Actions tab and watch workflow logs
 4. Check generated notebooks in `out/` and gallery in `docs-site/`
 
+### OR
+
+Have a look at these workflows:
+- A simple run on [tadis_example.yml](setups/2026/GSOC_2026_Paper/setup.yaml) on latest release of [tardis](https://github.com/tardis-sn/tardis):  
+- Running [old_example.yml](setups/1987/Old_1987_Paper/old_example.yml) on a pinned version of [tardis](https://github.com/tardis-sn/tardis/tree/0d099a3fcabd6cf797d6c99bb809e0a7ad138ff8): 
+
 ## Documentation
 
 See [docs/README.md](docs/README.md) for architecture, setup, environment, and usage details.

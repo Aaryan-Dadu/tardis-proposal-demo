@@ -88,12 +88,13 @@ def generate_plots_from_config(
         pass
 
     resolved_atom = resolve_atom_data(atom_data)
+    show_convergence = not sanity_only
     try:
         simulation = run_tardis(
             config,
             atom_data=resolved_atom,
             virtual_packet_logging=True,
-            show_convergence_plots=True,
+            show_convergence_plots=show_convergence,
         )
     except RuntimeError as exc:
         if "Convergence Plots cannot be displayed in command-line" not in str(exc):
