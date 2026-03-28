@@ -136,6 +136,30 @@ def ensure_conda_env(setup_yaml: Path, env_name: str) -> bool:
     return result.returncode == 0
 
 
+def conda_env_exists(env_name: str) -> bool:
+    result = subprocess.run(
+        ["conda", "env", "list", "--json"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return False
+
+    try:
+        payload = json.loads(result.stdout or "{}")
+    except json.JSONDecodeError:
+        return False
+
+    envs = payload.get("envs", []) if isinstance(payload, dict) else []
+    for env_path in envs:
+        if not isinstance(env_path, str):
+            continue
+        if Path(env_path).name == env_name:
+            return True
+    return False
+
+
 def normalize_atom_data(atom_data: str) -> str:
     candidate = atom_data.strip()
     if not candidate:
@@ -230,9 +254,13 @@ def main() -> int:
         atom_data = normalize_atom_data(
             str(entry.get("atom_data") or setup_data.get("config", {}).get("atom_data") or "kurucz_cd23_chianti_H_He_latest")
         )
-        if args.skip_env_setup:
+        if args.skip_env_setup and conda_env_exists(env_name):
             logger.info(f"Reusing existing environment for {resolved_config_path.name}: {env_name}")
         else:
+            if args.skip_env_setup:
+                logger.warning(
+                    f"Requested env reuse but environment not found for {resolved_config_path.name}: {env_name}. Creating it now."
+                )
             logger.info(f"Preparing environment for {resolved_config_path.name}: {env_name}")
             if not ensure_conda_env(setup_yaml_path, env_name):
                 logger.error(f"✗ Environment setup failed for {setup_yaml_path}")

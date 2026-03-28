@@ -75,7 +75,8 @@ def main() -> None:
     for row in rows:
         setup_yaml = Path(row["setup_yaml"])
         sanity_config = Path(row["sanity_config"])
-        env_name = env_name_for_config(sanity_config)
+        config_for_env = Path(row.get("config")) if isinstance(row.get("config"), str) and row.get("config") else sanity_config
+        env_name = env_name_for_config(config_for_env)
         try:
             ensure_conda_env(setup_yaml, env_name)
             ok = run_sanity(sanity_config, row.get("atom_data", "kurucz_cd23_chianti_H_He_latest"), env_name)
