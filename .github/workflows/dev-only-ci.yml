@@ -65,7 +65,7 @@ jobs:
         run: python scripts/generate_setup_yamls.py
 
       - name: Commit and push generated setup.yaml files
-        if: success() && steps.configcheck.outputs.has_configs == 'true'
+        if: success() && && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: |
           set +e
           git config user.name "github-actions[bot]"
