@@ -5,6 +5,8 @@ import json
 import subprocess
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+
 def env_name_for_config(config_path: Path) -> str:
     raw = str(config_path.with_suffix("")).replace("/", "-").replace("_", "-")
     return f"a4-{raw}"[:80]
@@ -25,10 +27,11 @@ def accept_conda_tos() -> None:
 
 
 def ensure_conda_env(setup_yaml: Path, env_name: str) -> None:
+    setup_helper = ROOT / "scripts" / "setup_env_from_setup_yaml.py"
     result = subprocess.run(
         [
             "python",
-            "server/setup_env_from_setup_yaml.py",
+            str(setup_helper),
             "--setup-yaml",
             str(setup_yaml),
             "--env-name",
@@ -72,7 +75,8 @@ def main() -> None:
     for row in rows:
         setup_yaml = Path(row["setup_yaml"])
         sanity_config = Path(row["sanity_config"])
-        env_name = env_name_for_config(sanity_config)
+        config_for_env = Path(row.get("config")) if isinstance(row.get("config"), str) and row.get("config") else sanity_config
+        env_name = env_name_for_config(config_for_env)
         try:
             ensure_conda_env(setup_yaml, env_name)
             ok = run_sanity(sanity_config, row.get("atom_data", "kurucz_cd23_chianti_H_He_latest"), env_name)

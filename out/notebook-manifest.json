@@ -1,14 +1,6 @@
 [
   {
-    "config": "setups/2033/AD_proposal_paper/skew_example.yml",
-    "notebook": "out/setups/2033/AD_proposal_paper/skew_example.ipynb",
-    "notebook_exists": true,
-    "setup_yaml": "/home/azureuser/tardis-proposal-demo/setups/2033/AD_proposal_paper/setup.yaml",
-    "template": "/home/azureuser/tardis-proposal-demo/templates/config_report_template.ipynb",
-    "env_name": "a4--home-azureuser-tardis-proposal-demo-setups-2033-AD-proposal-paper",
-    "status": "ok",
-    "reason": "ok",
-    "returncode": 0,
-    "stderr_tail": ""
+    "notebook_path": "out/setups/2026/GSOC_2026_Paper/tardis_example.ipynb",
+    "config_name": "tardis_example"
   }
 ]

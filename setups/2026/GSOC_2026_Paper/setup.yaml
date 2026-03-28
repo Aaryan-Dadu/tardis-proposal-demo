@@ -1,4 +1,4 @@
-setup_format_version: approach-4-v1
+setup_format_version: proposal-prototype-v1
 environment:
   name: tardis-config-env
   lockfile_url: https://raw.githubusercontent.com/tardis-sn/tardisbase/refs/heads/master/conda-linux-64.lock
@@ -18,4 +18,4 @@ tardis:
   conda_spec: tardis-sn
 config:
   path: setups/2026/GSOC_2026_Paper/tardis_example.yml
-  atom_data: kurucz_cd23_chianti_H_He_latest.h5
+  atom_data: kurucz_cd23_chianti_H_He_latest

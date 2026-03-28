@@ -78,7 +78,11 @@ def extract_atom_data(config_path: Path) -> str:
     data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
     atom_data = data.get("atom_data")
     if isinstance(atom_data, str) and atom_data.strip():
-        return atom_data
+        candidate = atom_data.strip()
+        candidate_path = Path(candidate)
+        if candidate_path.suffix.lower() == ".h5" and not candidate_path.exists():
+            return candidate_path.stem
+        return candidate
     return "kurucz_cd23_chianti_H_He_latest"
 
 
