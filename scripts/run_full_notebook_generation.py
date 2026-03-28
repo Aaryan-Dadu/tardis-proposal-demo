@@ -20,6 +20,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def resolve_project_path(path: Path, project_root: Path) -> Path:
+    if path.is_absolute():
+        return path
+    return project_root / path
+
+
+def project_relative_or_name(path: Path, project_root: Path) -> Path:
+    try:
+        return path.relative_to(project_root)
+    except ValueError:
+        return Path(path.name)
+
+
 def load_manifest_rows(manifest_path: Path) -> list[dict]:
     """Load manifest with graceful fallback for empty/corrupt files."""
     if not manifest_path.exists():
@@ -45,10 +58,11 @@ def run_papermill_for_config(
     template_path: Path,
 ) -> bool:
     """Execute notebook with papermill for a single config."""
-    project_root = Path.cwd()
+    project_root = Path.cwd().resolve()
+    resolved_config_path = resolve_project_path(config_path, project_root)
 
     # Make output mirror the config's folder structure
-    relative_config_dir = config_path.parent.relative_to(project_root)
+    relative_config_dir = project_relative_or_name(resolved_config_path.parent, project_root)
     mirrored_output_dir = output_dir / relative_config_dir
 
     mirrored_output_dir.mkdir(parents=True, exist_ok=True)
@@ -71,7 +85,7 @@ def run_papermill_for_config(
     
     try:
         run_env = os.environ.copy()
-        run_env["CONFIG_PATH"] = str(config_path)
+        run_env["CONFIG_PATH"] = str(project_relative_or_name(resolved_config_path, project_root))
         run_env["ATOM_DATA"] = atom_data
         result = subprocess.run(
             cmd,
@@ -155,7 +169,7 @@ def create_notebook_manifest(output_dir: Path) -> None:
 
 def main() -> int:
     """Main entry point."""
-    project_root = Path.cwd()
+    project_root = Path.cwd().resolve()
     generated_dir = project_root / "generated"
     output_dir = project_root / "out"
     template_path = project_root / "templates" / "config_report_template.ipynb"
@@ -183,29 +197,31 @@ def main() -> int:
             logger.warning(f"Skipping invalid manifest entry: {entry}")
             continue
         
-        setup_yaml_path = Path(entry.get("setup_yaml", ""))
+        setup_yaml_path = resolve_project_path(Path(entry.get("setup_yaml", "")), project_root)
         if not setup_yaml_path.exists():
             logger.warning(f"setup.yaml not found: {setup_yaml_path}")
             continue
         
         config_str = entry.get("config") or entry.get("config_file_path")
         config_path = Path(config_str) if isinstance(config_str, str) and config_str.strip() else Path()
+        resolved_config_path = resolve_project_path(config_path, project_root) if config_path != Path() else Path()
 
         setup_data = load_setup_yaml(setup_yaml_path)
-        if (not config_path.exists()) and isinstance(setup_data, dict):
+        if (not resolved_config_path.exists()) and isinstance(setup_data, dict):
             setup_config_path = setup_data.get("config", {}).get("path")
             if isinstance(setup_config_path, str) and setup_config_path.strip():
                 config_path = Path(setup_config_path)
+                resolved_config_path = resolve_project_path(config_path, project_root)
 
-        if not config_path.exists():
+        if not resolved_config_path.exists():
             logger.warning(f"Invalid entry: config path missing for setup {setup_yaml_path}")
             continue
 
-        env_name = env_name_for_config(config_path)
+        env_name = env_name_for_config(project_relative_or_name(resolved_config_path, project_root))
         atom_data = normalize_atom_data(
             str(entry.get("atom_data") or setup_data.get("config", {}).get("atom_data") or "kurucz_cd23_chianti_H_He_latest")
         )
-        logger.info(f"Preparing environment for {config_path.name}: {env_name}")
+        logger.info(f"Preparing environment for {resolved_config_path.name}: {env_name}")
         if not ensure_conda_env(setup_yaml_path, env_name):
             logger.error(f"✗ Environment setup failed for {setup_yaml_path}")
             failed += 1
@@ -213,7 +229,7 @@ def main() -> int:
         
         # Run papermill for this config
         success = run_papermill_for_config(
-            config_path=config_path,
+            config_path=resolved_config_path,
             env_name=env_name,
             atom_data=atom_data,
             output_dir=output_dir,
