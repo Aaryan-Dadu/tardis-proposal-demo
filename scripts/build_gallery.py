@@ -674,6 +674,24 @@ def load_manifest_rows(manifest_path: Path) -> list[dict]:
     return []
 
 
+def is_placeholder_failure_row(row: dict) -> bool:
+    config = str(row.get("config", "")).strip()
+    notebook = str(row.get("notebook", "")).strip()
+    setup_yaml = str(row.get("setup_yaml", "")).strip()
+    env_name = str(row.get("env_name", "")).strip()
+    status = str(row.get("status", "unknown")).lower().strip()
+    notebook_exists = bool(row.get("notebook_exists", False))
+
+    return (
+        not config
+        and not notebook
+        and not setup_yaml
+        and not env_name
+        and not notebook_exists
+        and status in {"unknown", "failed"}
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build static notebook gallery page.")
     parser.add_argument("--manifest", default="out/notebook-manifest.json")
@@ -683,6 +701,7 @@ def main() -> None:
     manifest_path = Path(args.manifest)
     rows = load_manifest_rows(manifest_path)
     rows = merge_manifest_with_discovered_notebooks(rows, Path("out"))
+    rows = [row for row in rows if not is_placeholder_failure_row(row)]
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
