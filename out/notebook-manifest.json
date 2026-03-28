@@ -2,5 +2,9 @@
   {
     "notebook_path": "out/setups/2026/GSOC_2026_Paper/tardis_example.ipynb",
     "config_name": "tardis_example"
+  },
+  {
+    "notebook_path": "out/setups/2033/AD_proposal_paper/skew_example.ipynb",
+    "config_name": "skew_example"
   }
 ]

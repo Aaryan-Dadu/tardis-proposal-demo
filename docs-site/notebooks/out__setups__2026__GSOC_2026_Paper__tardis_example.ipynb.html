@@ -7359,7 +7359,12 @@ a.anchor-link {
     if (!diagrams.length) {
       return;
     }
-    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.7.0/mermaid.esm.min.mjs")).default;
+    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.10.0/mermaid.esm.min.mjs")).default;
+    const elkUrl = "https://cdnjs.cloudflare.com/ajax/libs/mermaid-layout-elk/0.1.9/mermaid-layout-elk.esm.min.mjs";
+    if(elkUrl) {
+      const elkLayouts = (await import(elkUrl)).default;
+      mermaid.registerLayoutLoaders(elkLayouts);
+    }
     const parser = new DOMParser();
 
     mermaid.initialize({
@@ -7456,7 +7461,8 @@ a.anchor-link {
      * Post-process to ensure mermaid diagrams contain only valid SVG and XHTML.
      */
     function cleanMermaidSvg(svg) {
-      return svg.replace(RE_VOID_ELEMENT, replaceVoidElement);
+      svg = svg.replace(RE_VOID_ELEMENT, replaceVoidElement);
+      return `${SVG_XML_HEADER}${svg}`;
     }
 
 
@@ -7482,6 +7488,285 @@ a.anchor-link {
       }
       return `<${tag} ${rest}>`;
     }
+
+
+  /**
+   * Named HTML entities with their decimal equivalent codes.
+   *
+   * @see https://www.w3.org/TR/WD-html40-970708/sgml/entities.html
+   * */
+  const HTML_ENTITIES = `<!ENTITY Aacute "&#193;">
+<!ENTITY aacute "&#225;">
+<!ENTITY Acirc "&#194;">
+<!ENTITY acirc "&#226;">
+<!ENTITY acute "&#180;">
+<!ENTITY AElig "&#198;">
+<!ENTITY aelig "&#230;">
+<!ENTITY Agrave "&#192;">
+<!ENTITY agrave "&#224;">
+<!ENTITY alefsym "&#8501;">
+<!ENTITY Alpha "&#913;">
+<!ENTITY alpha "&#945;">
+<!ENTITY amp "&#38;">
+<!ENTITY and "&#8869;">
+<!ENTITY ang "&#8736;">
+<!ENTITY Aring "&#197;">
+<!ENTITY aring "&#229;">
+<!ENTITY asymp "&#8776;">
+<!ENTITY Atilde "&#195;">
+<!ENTITY atilde "&#227;">
+<!ENTITY Auml "&#196;">
+<!ENTITY auml "&#228;">
+<!ENTITY bdquo "&#8222;">
+<!ENTITY Beta "&#914;">
+<!ENTITY beta "&#946;">
+<!ENTITY brvbar "&#166;">
+<!ENTITY bull "&#8226;">
+<!ENTITY cap "&#8745;">
+<!ENTITY Ccedil "&#199;">
+<!ENTITY ccedil "&#231;">
+<!ENTITY cedil "&#184;">
+<!ENTITY cent "&#162;">
+<!ENTITY Chi "&#935;">
+<!ENTITY chi "&#967;">
+<!ENTITY circ "&#710;">
+<!ENTITY clubs "&#9827;">
+<!ENTITY cong "&#8773;">
+<!ENTITY copy "&#169;">
+<!ENTITY crarr "&#8629;">
+<!ENTITY cup "&#8746;">
+<!ENTITY curren "&#164;">
+<!ENTITY dagger "&#8224;">
+<!ENTITY Dagger "&#8225;">
+<!ENTITY darr "&#8595;">
+<!ENTITY dArr "&#8659;">
+<!ENTITY deg "&#176;">
+<!ENTITY Delta "&#916;">
+<!ENTITY delta "&#948;">
+<!ENTITY diams "&#9830;">
+<!ENTITY divide "&#247;">
+<!ENTITY Eacute "&#201;">
+<!ENTITY eacute "&#233;">
+<!ENTITY Ecirc "&#202;">
+<!ENTITY ecirc "&#234;">
+<!ENTITY Egrave "&#200;">
+<!ENTITY egrave "&#232;">
+<!ENTITY empty "&#8709;">
+<!ENTITY emsp "&#8195;">
+<!ENTITY ensp "&#8194;">
+<!ENTITY epsilon "&#949;">
+<!ENTITY Epsilon "&#917;">
+<!ENTITY equiv "&#8801;">
+<!ENTITY Eta "&#919;">
+<!ENTITY eta "&#951;">
+<!ENTITY ETH "&#208;">
+<!ENTITY eth "&#240;">
+<!ENTITY Euml "&#203;">
+<!ENTITY euml "&#235;">
+<!ENTITY exist "&#8707;">
+<!ENTITY fnof "&#402;">
+<!ENTITY forall "&#8704;">
+<!ENTITY frac12 "&#189;">
+<!ENTITY frac14 "&#188;">
+<!ENTITY frac34 "&#190;">
+<!ENTITY frasl "&#8260;">
+<!ENTITY Gamma "&#915;">
+<!ENTITY gamma "&#947;">
+<!ENTITY ge "&#8805;">
+<!ENTITY gt "&#62;">
+<!ENTITY harr "&#8596;">
+<!ENTITY hArr "&#8660;">
+<!ENTITY hearts "&#9829;">
+<!ENTITY hellip "&#8230;">
+<!ENTITY Iacute "&#205;">
+<!ENTITY iacute "&#237;">
+<!ENTITY Icirc "&#206;">
+<!ENTITY icirc "&#238;">
+<!ENTITY iexcl "&#161;">
+<!ENTITY Igrave "&#204;">
+<!ENTITY igrave "&#236;">
+<!ENTITY image "&#8465;">
+<!ENTITY infin "&#8734;">
+<!ENTITY int "&#8747;">
+<!ENTITY Iota "&#921;">
+<!ENTITY iota "&#953;">
+<!ENTITY iquest "&#191;">
+<!ENTITY isin "&#8712;">
+<!ENTITY Iuml "&#207;">
+<!ENTITY iuml "&#239;">
+<!ENTITY Kappa "&#922;">
+<!ENTITY kappa "&#954;">
+<!ENTITY Lambda "&#923;">
+<!ENTITY lambda "&#955;">
+<!ENTITY lang "&#9001;">
+<!ENTITY laquo "&#171;">
+<!ENTITY larr "&#8592;">
+<!ENTITY lArr "&#8656;">
+<!ENTITY lceil "&#8968;">
+<!ENTITY ldquo "&#8220;">
+<!ENTITY le "&#8804;">
+<!ENTITY lfloor "&#8970;">
+<!ENTITY lowast "&#8727;">
+<!ENTITY loz "&#9674;">
+<!ENTITY lrm "&#8206;">
+<!ENTITY lsaquo "&#8249;">
+<!ENTITY lsquo "&#8216;">
+<!ENTITY lt "&#60;">
+<!ENTITY macr "&#175;">
+<!ENTITY mdash "&#8212;">
+<!ENTITY micro "&#181;">
+<!ENTITY middot "&#183;">
+<!ENTITY minus "&#8722;">
+<!ENTITY Mu "&#924;">
+<!ENTITY mu "&#956;">
+<!ENTITY nabla "&#8711;">
+<!ENTITY nbsp "&#160;">
+<!ENTITY ndash "&#8211;">
+<!ENTITY ne "&#8800;">
+<!ENTITY ni "&#8715;">
+<!ENTITY not "&#172;">
+<!ENTITY notin "&#8713;">
+<!ENTITY nsub "&#8836;">
+<!ENTITY Ntilde "&#209;">
+<!ENTITY ntilde "&#241;">
+<!ENTITY Nu "&#925;">
+<!ENTITY nu "&#957;">
+<!ENTITY Oacute "&#211;">
+<!ENTITY oacute "&#243;">
+<!ENTITY Ocirc "&#212;">
+<!ENTITY ocirc "&#244;">
+<!ENTITY OElig "&#338;">
+<!ENTITY oelig "&#339;">
+<!ENTITY Ograve "&#210;">
+<!ENTITY ograve "&#242;">
+<!ENTITY oline "&#8254;">
+<!ENTITY Omega "&#937;">
+<!ENTITY omega "&#969;">
+<!ENTITY Omicron "&#927;">
+<!ENTITY omicron "&#959;">
+<!ENTITY oplus "&#8853;">
+<!ENTITY or "&#8870;">
+<!ENTITY ordf "&#170;">
+<!ENTITY ordm "&#186;">
+<!ENTITY Oslash "&#216;">
+<!ENTITY oslash "&#248;">
+<!ENTITY Otilde "&#213;">
+<!ENTITY otilde "&#245;">
+<!ENTITY otimes "&#8855;">
+<!ENTITY Ouml "&#214;">
+<!ENTITY ouml "&#246;">
+<!ENTITY para "&#182;">
+<!ENTITY part "&#8706;">
+<!ENTITY permil "&#8240;">
+<!ENTITY perp "&#8869;">
+<!ENTITY Phi "&#934;">
+<!ENTITY phi "&#966;">
+<!ENTITY Pi "&#928;">
+<!ENTITY pi "&#960;">
+<!ENTITY piv "&#982;">
+<!ENTITY plusmn "&#177;">
+<!ENTITY pound "&#163;">
+<!ENTITY prime "&#8242;">
+<!ENTITY Prime "&#8243;">
+<!ENTITY prod "&#8719;">
+<!ENTITY prop "&#8733;">
+<!ENTITY Psi "&#936;">
+<!ENTITY psi "&#968;">
+<!ENTITY quot "&#34;">
+<!ENTITY radic "&#8730;">
+<!ENTITY rang "&#9002;">
+<!ENTITY raquo "&#187;">
+<!ENTITY rarr "&#8594;">
+<!ENTITY rArr "&#8658;">
+<!ENTITY rceil "&#8969;">
+<!ENTITY rdquo "&#8221;">
+<!ENTITY real "&#8476;">
+<!ENTITY reg "&#174;">
+<!ENTITY rfloor "&#8971;">
+<!ENTITY Rho "&#929;">
+<!ENTITY rho "&#961;">
+<!ENTITY rlm "&#8207;">
+<!ENTITY rsaquo "&#8250;">
+<!ENTITY rsquo "&#8217;">
+<!ENTITY sbquo "&#8218;">
+<!ENTITY Scaron "&#352;">
+<!ENTITY scaron "&#353;">
+<!ENTITY sdot "&#8901;">
+<!ENTITY sect "&#167;">
+<!ENTITY shy "&#173;">
+<!ENTITY Sigma "&#931;">
+<!ENTITY sigma "&#963;">
+<!ENTITY sigmaf "&#962;">
+<!ENTITY sim "&#8764;">
+<!ENTITY spades "&#9824;">
+<!ENTITY sub "&#8834;">
+<!ENTITY sube "&#8838;">
+<!ENTITY sum "&#8721;">
+<!ENTITY sup "&#8835;">
+<!ENTITY sup1 "&#185;">
+<!ENTITY sup2 "&#178;">
+<!ENTITY sup3 "&#179;">
+<!ENTITY supe "&#8839;">
+<!ENTITY szlig "&#223;">
+<!ENTITY Tau "&#932;">
+<!ENTITY tau "&#964;">
+<!ENTITY there4 "&#8756;">
+<!ENTITY Theta "&#920;">
+<!ENTITY theta "&#952;">
+<!ENTITY thetasym "&#977;">
+<!ENTITY thinsp "&#8201;">
+<!ENTITY THORN "&#222;">
+<!ENTITY thorn "&#254;">
+<!ENTITY tilde "&#732;">
+<!ENTITY times "&#215;">
+<!ENTITY trade "&#8482;">
+<!ENTITY Uacute "&#218;">
+<!ENTITY uacute "&#250;">
+<!ENTITY uarr "&#8593;">
+<!ENTITY uArr "&#8657;">
+<!ENTITY Ucirc "&#219;">
+<!ENTITY ucirc "&#251;">
+<!ENTITY Ugrave "&#217;">
+<!ENTITY ugrave "&#249;">
+<!ENTITY uml "&#168;">
+<!ENTITY upsih "&#978;">
+<!ENTITY Upsilon "&#933;">
+<!ENTITY upsilon "&#965;">
+<!ENTITY Uuml "&#220;">
+<!ENTITY uuml "&#252;">
+<!ENTITY weierp "&#8472;">
+<!ENTITY Xi "&#926;">
+<!ENTITY xi "&#958;">
+<!ENTITY Yacute "&#221;">
+<!ENTITY yacute "&#253;">
+<!ENTITY yen "&#165;">
+<!ENTITY Yuml "&#376;">
+<!ENTITY yuml "&#255;">
+<!ENTITY Zeta "&#918;">
+<!ENTITY zeta "&#950;">
+<!ENTITY zwj "&#8205;">
+<!ENTITY zwnj "&#8204;">`.replace(/\n/g, ' ');
+
+  /**
+   * A reasonably strict xml declaration.
+   */
+  const XML_DECL = '<?xml version="1.0" standalone="no"?>';
+
+  /**
+   * The beginning of the XML doctype declaration.
+   */
+  const DOCTYPE_START = `<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [`;
+
+  /**
+   * The end of the XML docype declaration.
+   */
+  const DOCTYPE_END = ']>';
+
+  /**
+   * A full header for an SVG XML document.
+   */
+  const SVG_XML_HEADER = `${XML_DECL}
+    ${DOCTYPE_START}${HTML_ENTITIES}${DOCTYPE_END}`;
 
     void Promise.all([...diagrams].map(renderOneMarmaid));
   });
@@ -7644,9 +7929,9 @@ a.anchor-link {
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="a6948fa3-25eb-4e63-803b-a899b65ad495" tabindex="0">
+<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="87fcd899-bfee-49ae-9e62-b5b81dd74ebf" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('a6948fa3-25eb-4e63-803b-a899b65ad495');
+var element = document.getElementById('87fcd899-bfee-49ae-9e62-b5b81dd74ebf');
 (function(root) {
   function now() {
     return new Date();
@@ -7924,9 +8209,9 @@ function(Bokeh) {} // ensure no trailing comma for IE
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="4fcf424e-d323-44ac-9f1b-c8763b5ef187" tabindex="0">
+<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="4510bfa4-7d8c-41f9-bd80-a72022ae86bf" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('4fcf424e-d323-44ac-9f1b-c8763b5ef187');
+var element = document.getElementById('4510bfa4-7d8c-41f9-bd80-a72022ae86bf');
 
 if ((window.PyViz === undefined) || (window.PyViz instanceof HTMLElement)) {
   window.PyViz = {comms: {}, comm_status:{}, kernels:{}, receivers: {}, plot_index: []}
@@ -8318,9 +8603,9 @@ if (window.Jupyter !== undefined) {
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="9af4217d-4a44-4b97-b2af-546c899e3651" tabindex="0">
+<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="d71bbae0-df7f-4e8c-9105-c8f75b26e367" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('9af4217d-4a44-4b97-b2af-546c899e3651');
+var element = document.getElementById('d71bbae0-df7f-4e8c-9105-c8f75b26e367');
 (function(root) {
   function now() {
     return new Date();
@@ -8598,9 +8883,9 @@ function(Bokeh) {} // ensure no trailing comma for IE
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="c85ac4a0-87f5-432b-b987-13e8f793ca52" tabindex="0">
+<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="15ff9a84-f2d4-44d3-a26d-438085711031" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('c85ac4a0-87f5-432b-b987-13e8f793ca52');
+var element = document.getElementById('15ff9a84-f2d4-44d3-a26d-438085711031');
 
 if ((window.PyViz === undefined) || (window.PyViz instanceof HTMLElement)) {
   window.PyViz = {comms: {}, comm_status:{}, kernels:{}, receivers: {}, plot_index: []}
@@ -8945,9 +9230,9 @@ if (window.Jupyter !== undefined) {
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="a41ea7f2-5d7d-4669-b17e-10488647ac3a" tabindex="0">
+<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="5bf028c3-b350-4c51-a820-1d2e020a10b0" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('a41ea7f2-5d7d-4669-b17e-10488647ac3a');
+var element = document.getElementById('5bf028c3-b350-4c51-a820-1d2e020a10b0');
 (function(root) {
   function now() {
     return new Date();
@@ -9225,9 +9510,9 @@ function(Bokeh) {} // ensure no trailing comma for IE
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="acf8c2e0-5b6c-4a30-858f-f04d475a1a4d" tabindex="0">
+<div class="jp-RenderedJavaScript jp-OutputArea-output" data-mime-type="application/javascript" id="07c5e022-0db9-4abe-a39e-bb7e44362761" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('acf8c2e0-5b6c-4a30-858f-f04d475a1a4d');
+var element = document.getElementById('07c5e022-0db9-4abe-a39e-bb7e44362761');
 
 if ((window.PyViz === undefined) || (window.PyViz instanceof HTMLElement)) {
   window.PyViz = {comms: {}, comm_status:{}, kernels:{}, receivers: {}, plot_index: []}
@@ -9472,9 +9757,9 @@ if (window.Jupyter !== undefined) {
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jupyter-widgets jp-OutputArea-output" id="86d4eb31-cbd3-4d6e-a84c-bf82ce79cef7" tabindex="0">
+<div class="jupyter-widgets jp-OutputArea-output" id="0dc8dc6f-db39-4e90-b41c-395efe950055" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('86d4eb31-cbd3-4d6e-a84c-bf82ce79cef7');
+var element = document.getElementById('0dc8dc6f-db39-4e90-b41c-395efe950055');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "64151c1a919248459976c71ecdb62654", "version_major": 2, "version_minor": 0}
@@ -9482,9 +9767,9 @@ var element = document.getElementById('86d4eb31-cbd3-4d6e-a84c-bf82ce79cef7');
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jupyter-widgets jp-OutputArea-output" id="e1bb916c-261c-41a8-8b20-d12846585f58" tabindex="0">
+<div class="jupyter-widgets jp-OutputArea-output" id="f3e5b3d4-5b59-400e-a21d-1efde2ed060e" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('e1bb916c-261c-41a8-8b20-d12846585f58');
+var element = document.getElementById('f3e5b3d4-5b59-400e-a21d-1efde2ed060e');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "f365b7d673c24c31a85002e4dbfc3b7c", "version_major": 2, "version_minor": 0}
@@ -9492,9 +9777,9 @@ var element = document.getElementById('e1bb916c-261c-41a8-8b20-d12846585f58');
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jupyter-widgets jp-OutputArea-output" id="faf9c6e7-fcbc-4224-983a-dd8c0b78078e" tabindex="0">
+<div class="jupyter-widgets jp-OutputArea-output" id="522c6eb6-960e-4f09-8025-06f0293b7003" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('faf9c6e7-fcbc-4224-983a-dd8c0b78078e');
+var element = document.getElementById('522c6eb6-960e-4f09-8025-06f0293b7003');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "48fd6e3a05f94994bb1396ee26601df6", "version_major": 2, "version_minor": 0}
@@ -9502,9 +9787,9 @@ var element = document.getElementById('faf9c6e7-fcbc-4224-983a-dd8c0b78078e');
 </div>
 </div>
 <div class="jp-OutputArea-child">
-<div class="jupyter-widgets jp-OutputArea-output" id="e2dcfa61-2d44-4747-ae72-0665312eae30" tabindex="0">
+<div class="jupyter-widgets jp-OutputArea-output" id="5b130c47-a682-400c-bacd-cb1c98b02780" tabindex="0">
 <script type="text/javascript">
-var element = document.getElementById('e2dcfa61-2d44-4747-ae72-0665312eae30');
+var element = document.getElementById('5b130c47-a682-400c-bacd-cb1c98b02780');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "571a4b2c3f1f4e35838d93925b69d5a8", "version_major": 2, "version_minor": 0}
