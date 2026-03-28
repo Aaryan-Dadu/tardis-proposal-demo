@@ -1,7 +1,6 @@
 name: tardis-proposal-prototype-dev-only-ci
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - dev-only-ci
