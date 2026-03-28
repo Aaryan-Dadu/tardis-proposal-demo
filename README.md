@@ -37,8 +37,8 @@ Thank you for reviewing my GSoC proposal prototype. This repository shows the im
 ### OR
 
 Have a look at these workflows:
-- A simple run on [tadis_example.yml](setups/2026/GSOC_2026_Paper/setup.yaml) on latest release of [tardis](https://github.com/tardis-sn/tardis):  
-- Running [old_example.yml](setups/1987/Old_1987_Paper/old_example.yml) on a pinned version of [tardis](https://github.com/tardis-sn/tardis/tree/0d099a3fcabd6cf797d6c99bb809e0a7ad138ff8): 
+- A simple run on [tadis_example.yml](setups/2026/GSOC_2026_Paper/setup.yaml) on latest release of [tardis](https://github.com/tardis-sn/tardis): 8528d6aaf6b51d6246187182b44e1310be4c6244
+- Running [old_example.yml](setups/1987/Old_1987_Paper/old_example.yml) on a pinned version of [tardis](https://github.com/tardis-sn/tardis/tree/0d099a3fcabd6cf797d6c99bb809e0a7ad138ff8): a6902c87f3c87198f5be1d596b3cfee73a27d367
 
 ## Documentation
 
