@@ -4,7 +4,7 @@ This prototype automates notebook generation and gallery publishing for TARDIS s
 
 ## Welcome mentors
 
-Thank you for reviewing my GSoC proposal prototype. This repository shows the implementation in a working form. The `main` branch runs full notebook generation directly on GitHub CI runners, while the `server-based` branch runs server based execution orchestrated by CI. Generated notebooks and gallery outputs are included for review. Initially, `main` was based on server based approach that's why to have the stable prototype for reference of server-based approach is kept in `server-based` branch.
+Thank you for reviewing my GSoC proposal prototype. This repository shows the implementation in a working form. The `main` branch runs full notebook generation directly on GitHub CI runners, while the `server-based` branch runs server based execution orchestrated by CI. Generated notebooks and gallery outputs are included for review. Initially, `main` was based on server based approach that's why to have the stable prototype for reference, server-based approach is kept in `server-based` branch.
 
 ## For mentors
 
